@@ -238,7 +238,7 @@
         /* KPI Grid Styling */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -510,62 +510,7 @@
     
 
 
-    <!-- 3. KPI DASHBOARD ROW -->
-    <section class="kpi-grid" aria-label="High-Level Anomaly Summary">
-        <div class="kpi-card" style="border-left: 3px solid var(--accent-blue);">
-            <div>
-                <span class="kpi-label">Checked Products</span>
-                <div class="kpi-value" id="kpi-total-checked">0</div>
-            </div>
-            <span class="kpi-subtitle">Unique FSNs in baseline</span>
-        </div>
-        <div class="kpi-card" style="border-left: 3px solid var(--accent-amber);">
-            <div>
-                <span class="kpi-label">Active Anomalies</span>
-                <div class="kpi-value" id="kpi-anomalies">0</div>
-            </div>
-            <span class="kpi-subtitle" id="kpi-anomalies-pct">0% of product catalog</span>
-        </div>
-        <div class="kpi-card" style="border-left: 3px solid var(--accent-green);">
-            <div>
-                <span class="kpi-label">Volume Spikes</span>
-                <div class="kpi-value" style="color: var(--accent-green);" id="kpi-spikes">0</div>
-            </div>
-            <span class="kpi-subtitle" id="kpi-spikes-sub">0 Critical Spikes</span>
-        </div>
-        <div class="kpi-card" style="border-left: 3px solid var(--accent-red);">
-            <div>
-                <span class="kpi-label">Volume Drops</span>
-                <div class="kpi-value" style="color: var(--accent-red);" id="kpi-drops">0</div>
-            </div>
-            <span class="kpi-subtitle" id="kpi-drops-sub">0 Critical Drops</span>
-        </div>
-    </section>
-
-    <!-- 4. SEVERITY TIERS & BUSINESS RULES PANEL -->
-    <section class="legend-panel" aria-label="Anomaly Severity Legend">
-        <h2 class="legend-title">⚡ Anomaly Thresholds & Business Classification Rules</h2>
-        <div class="legend-grid">
-            <div class="legend-item">
-                <span class="legend-badge badge-crit-spike">⚡ Critical Spike</span>
-                <p class="legend-desc">Revenue Spike is <strong>&ge; 200%</strong>. Minimum 10 units sold on the latest day to avoid low-volume false triggers.</p>
-            </div>
-            <div class="legend-item">
-                <span class="legend-badge badge-spike">▲ Volumetric Spike</span>
-                <p class="legend-desc">Revenue Spike is <strong>&ge; 80%</strong>. Minimum 5 units sold on the latest day. Indicates strong momentum.</p>
-            </div>
-            <div class="legend-item">
-                <span class="legend-badge badge-drop">▼ Volumetric Drop</span>
-                <p class="legend-desc">Revenue Spike is <strong>&le; -55%</strong>. Trailing average units sold must be &ge; 2.0. Catches sudden momentum slow-downs.</p>
-            </div>
-            <div class="legend-item">
-                <span class="legend-badge badge-crit-drop">🚨 Critical Drop</span>
-                <p class="legend-desc">Revenue Spike is <strong>&le; -85%</strong> with trailing average units sold &ge; 4.0, or latest day units sold dropped to <strong>0 units</strong> from a baseline average &ge; 3.0. High stockout/outage risk.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- 5. FILTER CONTROLS ROW -->
+    <!-- 3. FILTER CONTROLS ROW -->
     <section class="filter-row" aria-label="Report Filters and Controls">
         <div class="filter-group large-group">
             <label class="input-label" for="anomaly-search">Fuzzy Search Catalog</label>
@@ -597,6 +542,68 @@
         </div>
         <div class="filter-group action-group">
             <button class="btn btn-secondary" onclick="exportAnomalyCSV()" style="height: 38px; padding: 0 20px; font-weight: 500;">Export Report CSV</button>
+        </div>
+    </section>
+
+    <!-- 4. KPI DASHBOARD ROW -->
+    <section class="kpi-grid" aria-label="High-Level Anomaly Summary">
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-blue);">
+            <div>
+                <span class="kpi-label">Checked Products</span>
+                <div class="kpi-value" id="kpi-total-checked">0</div>
+            </div>
+            <span class="kpi-subtitle">Total unique FSNs</span>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-red);">
+            <div>
+                <span class="kpi-label">Critical Spikes</span>
+                <div class="kpi-value" style="color: var(--accent-red);" id="kpi-crit-spikes">0</div>
+            </div>
+            <span class="kpi-subtitle">⚡ Revenue Spike &ge; 200%</span>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-green);">
+            <div>
+                <span class="kpi-label">Volumetric Spikes</span>
+                <div class="kpi-value" style="color: var(--accent-green);" id="kpi-norm-spikes">0</div>
+            </div>
+            <span class="kpi-subtitle">▲ Revenue Spike &ge; 80%</span>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-amber);">
+            <div>
+                <span class="kpi-label">Volumetric Drops</span>
+                <div class="kpi-value" style="color: var(--accent-amber);" id="kpi-norm-drops">0</div>
+            </div>
+            <span class="kpi-subtitle">▼ Revenue Spike &le; -55%</span>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-purple);">
+            <div>
+                <span class="kpi-label">Critical Drops</span>
+                <div class="kpi-value" style="color: var(--accent-purple);" id="kpi-crit-drops">0</div>
+            </div>
+            <span class="kpi-subtitle">🚨 Revenue Spike &le; -85%</span>
+        </div>
+    </section>
+
+    <!-- 5. SEVERITY TIERS & BUSINESS RULES PANEL -->
+    <section class="legend-panel" aria-label="Anomaly Severity Legend">
+        <h2 class="legend-title">⚡ Anomaly Thresholds & Business Classification Rules</h2>
+        <div class="legend-grid">
+            <div class="legend-item">
+                <span class="legend-badge badge-crit-spike">⚡ Critical Spike</span>
+                <p class="legend-desc">Revenue Spike is <strong>&ge; 200%</strong>. Minimum 10 units sold on the latest day to avoid low-volume false triggers.</p>
+            </div>
+            <div class="legend-item">
+                <span class="legend-badge badge-spike">▲ Volumetric Spike</span>
+                <p class="legend-desc">Revenue Spike is <strong>&ge; 80%</strong>. Minimum 5 units sold on the latest day. Indicates strong momentum.</p>
+            </div>
+            <div class="legend-item">
+                <span class="legend-badge badge-drop">▼ Volumetric Drop</span>
+                <p class="legend-desc">Revenue Spike is <strong>&le; -55%</strong>. Trailing average units sold must be &ge; 2.0. Catches sudden momentum slow-downs.</p>
+            </div>
+            <div class="legend-item">
+                <span class="legend-badge badge-crit-drop">🚨 Critical Drop</span>
+                <p class="legend-desc">Revenue Spike is <strong>&le; -85%</strong> with trailing average units sold &ge; 4.0, or latest day units sold dropped to <strong>0 units</strong> from a baseline average &ge; 3.0. High stockout/outage risk.</p>
+            </div>
         </div>
     </section>
 
@@ -74406,16 +74413,10 @@
             });
 
             // Update KPI cards
-            document.getElementById('kpi-anomalies').innerText = totalAnomalies.toLocaleString();
-            const totalEvaluations = totalCheckedProducts;
-            const anomaliesPct = totalEvaluations > 0 ? ((totalAnomalies / totalEvaluations) * 100).toFixed(1) : 0;
-            document.getElementById('kpi-anomalies-pct').innerText = `${anomaliesPct}% of total evaluations`;
-
-            document.getElementById('kpi-spikes').innerText = (criticalSpikes + normalSpikes).toLocaleString();
-            document.getElementById('kpi-spikes-sub').innerText = `${criticalSpikes} Critical Spikes (🔴)`;
-
-            document.getElementById('kpi-drops').innerText = (criticalDrops + normalDrops).toLocaleString();
-            document.getElementById('kpi-drops-sub').innerText = `${criticalDrops} Critical Drops (🚨)`;
+            document.getElementById('kpi-crit-spikes').innerText = criticalSpikes.toLocaleString();
+            document.getElementById('kpi-norm-spikes').innerText = normalSpikes.toLocaleString();
+            document.getElementById('kpi-norm-drops').innerText = normalDrops.toLocaleString();
+            document.getElementById('kpi-crit-drops').innerText = criticalDrops.toLocaleString();
 
             // Update dropdown values
             uniqueBrands = Array.from(brandsSet).sort();
