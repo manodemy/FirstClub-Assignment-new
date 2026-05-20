@@ -102,6 +102,28 @@ class DashboardRequestHandler(http.server.SimpleHTTPRequestHandler):
                 self.wfile.write(msg.encode('utf-8'))
 
         else:
+            # Serve raw_transaction_data.csv if /raw-data is requested
+            if parsed_url.path == '/raw-data':
+                csv_path = os.path.join(os.getcwd(), "raw_transaction_data.csv")
+                if os.path.exists(csv_path):
+                    try:
+                        with open(csv_path, "rb") as f:
+                            csv_bytes = f.read()
+                        self.send_response(200)
+                        self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                        self.send_header('Content-Length', str(len(csv_bytes)))
+                        self.end_headers()
+                        self.wfile.write(csv_bytes)
+                        print(f"[DataServer] Served raw_transaction_data.csv ({len(csv_bytes):,} bytes)")
+                    except Exception as e:
+                        self.send_response(500)
+                        self.end_headers()
+                        self.wfile.write(f"Error reading CSV: {e}".encode())
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+                    self.wfile.write(b"raw_transaction_data.csv not found")
+                return
             # Fallback to serving index.html as default if path is empty or /
             if parsed_url.path == '/' or parsed_url.path == '':
                 self.path = '/index.html'

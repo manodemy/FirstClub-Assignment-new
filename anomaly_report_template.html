@@ -509,6 +509,47 @@
 
     <!-- 2. SYNCHRONIZATION BAR -->
     <div id="error-alert"></div>
+
+    <!-- Data Health & Quality Indicator -->
+    <div id="data-health-card" class="panel" style="margin-bottom: 24px; padding: 16px; border-color: rgba(45, 212, 160, 0.2); background: linear-gradient(135deg, rgba(45, 212, 160, 0.02) 0%, rgba(79, 142, 247, 0.02) 100%);">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span id="health-icon" style="font-size: 1.5rem;">🛡️</span>
+                <div>
+                    <h3 style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px;">Data Quality & Sanity Check</h3>
+                    <p id="health-summary" style="font-size: 0.8rem; color: var(--text-secondary);">Analyzing data points...</p>
+                </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="text-align: right;">
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">Health Score</div>
+                    <div id="health-score" style="font-size: 1.25rem; font-weight: 700; color: var(--accent-green);">100%</div>
+                </div>
+                <button class="btn btn-secondary" style="margin: 0; padding: 6px 12px; font-size: 0.75rem; height: auto;" onclick="toggleHealthDetails()">View Details</button>
+            </div>
+        </div>
+        <div id="health-details" style="display: none; margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; color: var(--text-secondary);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+                <div>
+                    <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">Basic Consistency</div>
+                    <div id="sanity-rows">&bull; Total Rows: --</div>
+                    <div id="sanity-range">&bull; Dates Covered: --</div>
+                    <div id="sanity-fsns">&bull; Unique FSNs: --</div>
+                </div>
+                <div>
+                    <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">Pricing & Sales Sanity</div>
+                    <div id="sanity-rev-match">&bull; Revenue Mismatches: --</div>
+                    <div id="sanity-negative">&bull; Negative/Zero Pricing: --</div>
+                    <div id="sanity-competitor">&bull; Comp Price Gaps: --</div>
+                </div>
+                <div>
+                    <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">Inventory & Stock Alignment</div>
+                    <div id="sanity-low-stock-sales">&bull; Low Stock Sales: --</div>
+                    <div id="sanity-demand-score">&bull; Demand Score Gaps: --</div>
+                </div>
+            </div>
+        </div>
+    </div>
     
 
 
@@ -644,6 +685,7 @@
     <script>
         // Fallback realistic representative dataset compiled dynamically
         const DEMO_DATA = /* DEMO_DATA_PLACEHOLDER */;
+        const DATA_META = /* DATA_META_PLACEHOLDER */;
 
         // Primary variables
         let dataset = [...DEMO_DATA];
@@ -841,6 +883,9 @@
         function processDataset(newDataset) {
             dataset = newDataset;
             if (dataset.length === 0) return;
+
+            // Run data sanity scorecard check
+            runDataSanityCheck(dataset);
 
             dataset.sort((a, b) => a.Date > b.Date ? 1 : (a.Date < b.Date ? -1 : 0));
             
@@ -1202,13 +1247,189 @@
             }
         }
 
-        window.addEventListener('load', () => {
+        function toggleHealthDetails() {
+            const details = document.getElementById('health-details');
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+            } else {
+                details.style.display = 'none';
+            }
+        }
+
+        function runDataSanityCheck(rows) {
+            if (rows.length === 0) return;
+
+            let revMismatches = 0;
+            let zeroOrNegPrices = 0;
+            let competitorGaps = 0;
+            let lowStockSales = 0;
+            let demandScoreGaps = 0;
+
+            const dates = Array.from(new Set(rows.map(r => r.Date))).sort();
+            const fsns = Array.from(new Set(rows.map(r => r.FSN))).sort();
+
+            rows.forEach(r => {
+                // 1. Revenue Consistency: Revenue should be close to Units * Price
+                const expectedRev = r.Units_Sold * r.Sell_Price;
+                if (Math.abs(expectedRev - r.Revenue) > 2) {
+                    revMismatches++;
+                }
+
+                // 2. Negative/Zero price check
+                if (r.Sell_Price <= 0 || (r.Comp_Price !== undefined && r.Comp_Price <= 0)) {
+                    zeroOrNegPrices++;
+                }
+
+                // 3. Competitor price check: If Comp_Price is way higher or lower
+                if (r.Comp_Price > 0) {
+                    const priceGap = Math.abs(r.Sell_Price - r.Comp_Price) / r.Comp_Price;
+                    if (priceGap > 0.8) {
+                        competitorGaps++;
+                    }
+                }
+
+                // 4. Low stock sales check: In-stock % is below 5% but sales > 0
+                if (r.Instock_Pct < 5 && r.Units_Sold > 0) {
+                    lowStockSales++;
+                }
+
+                // 5. Demand Score Gaps: High sales volume with very low demand score
+                if (r.Units_Sold > 20 && r.Demand_Score < 10) {
+                    demandScoreGaps++;
+                }
+            });
+
+            // Calculate overall data quality score
+            const totalChecks = rows.length;
+            const issues = revMismatches + zeroOrNegPrices + competitorGaps + lowStockSales + demandScoreGaps;
+            const healthScore = Math.max(0, 100 - (issues / totalChecks * 100)).toFixed(1);
+
+            // Update UI elements
+            const scoreEl = document.getElementById('health-score');
+            const iconEl = document.getElementById('health-icon');
+            const cardEl = document.getElementById('data-health-card');
+            
+            if (scoreEl && iconEl && cardEl) {
+                scoreEl.innerText = healthScore + "%";
+                const scoreNum = parseFloat(healthScore);
+                if (scoreNum >= 98) {
+                    scoreEl.style.color = "var(--accent-green)";
+                    iconEl.innerText = "🛡️";
+                    cardEl.style.borderColor = "rgba(45, 212, 160, 0.2)";
+                    document.getElementById('health-summary').innerText = `Excellent! Passed all standard consistency checks. Total rows: ${rows.length.toLocaleString()}`;
+                } else if (scoreNum >= 90) {
+                    scoreEl.style.color = "var(--accent-amber)";
+                    iconEl.innerText = "⚠️";
+                    cardEl.style.borderColor = "rgba(245, 166, 35, 0.2)";
+                    document.getElementById('health-summary').innerText = `Good. Some price gaps or minor anomalies detected. Total rows: ${rows.length.toLocaleString()}`;
+                } else {
+                    scoreEl.style.color = "var(--accent-red)";
+                    iconEl.innerText = "🚨";
+                    cardEl.style.borderColor = "rgba(241, 107, 107, 0.2)";
+                    document.getElementById('health-summary').innerText = `Critical data inconsistencies found. Check details below! Total rows: ${rows.length.toLocaleString()}`;
+                }
+            }
+
+            // Details list
+            const sanityRows = document.getElementById('sanity-rows');
+            if (sanityRows) sanityRows.innerHTML = `&bull; Total Rows: <strong>${rows.length.toLocaleString()}</strong>`;
+            const sanityRange = document.getElementById('sanity-range');
+            if (sanityRange) sanityRange.innerHTML = `&bull; Dates Covered: <strong>${dates[0]}</strong> to <strong>${dates[dates.length-1]}</strong>`;
+            const sanityFsns = document.getElementById('sanity-fsns');
+            if (sanityFsns) sanityFsns.innerHTML = `&bull; Unique FSNs: <strong>${fsns.length}</strong>`;
+            
+            const sanityRevMatch = document.getElementById('sanity-rev-match');
+            if (sanityRevMatch) sanityRevMatch.innerHTML = `&bull; Rev Mismatches: <strong style="color: ${revMismatches > 0 ? 'var(--accent-red)' : 'inherit'}">${revMismatches}</strong>`;
+            const sanityNegative = document.getElementById('sanity-negative');
+            if (sanityNegative) sanityNegative.innerHTML = `&bull; Invalid Pricing: <strong style="color: ${zeroOrNegPrices > 0 ? 'var(--accent-red)' : 'inherit'}">${zeroOrNegPrices}</strong>`;
+            const sanityCompetitor = document.getElementById('sanity-competitor');
+            if (sanityCompetitor) sanityCompetitor.innerHTML = `&bull; Comp Gap Anomalies: <strong style="color: ${competitorGaps > 0 ? 'var(--accent-amber)' : 'inherit'}">${competitorGaps}</strong>`;
+            
+            const sanityLowStockSales = document.getElementById('sanity-low-stock-sales');
+            if (sanityLowStockSales) sanityLowStockSales.innerHTML = `&bull; Out-of-Stock Sales: <strong style="color: ${lowStockSales > 0 ? 'var(--accent-red)' : 'inherit'}">${lowStockSales}</strong>`;
+            const sanityDemandScore = document.getElementById('sanity-demand-score');
+            if (sanityDemandScore) sanityDemandScore.innerHTML = `&bull; Demand Score Gaps: <strong style="color: ${demandScoreGaps > 0 ? 'var(--accent-amber)' : 'inherit'}">${demandScoreGaps}</strong>`;
+        }
+
+        async function autoLoadServerData() {
+            const syncDot = document.getElementById('sync-dot');
+            const syncText = document.getElementById('sync-text');
+            
+            let fetchUrl = '/raw-data';
+            if (window.location.protocol.startsWith('file')) {
+                fetchUrl = 'http://localhost:8000/raw-data';
+            }
+            
+            try {
+                const response = await fetch(fetchUrl);
+                if (response.ok) {
+                    const csvText = await response.text();
+                    
+                    // Parse CSV text to Dataset objects
+                    const parsed = parseCSV(csvText);
+                    if (parsed.length < 2) throw new Error("CSV contains insufficient rows.");
+                    
+                    const headerMap = mapHeaders(parsed[0]);
+                    if (headerMap['Date'] === -1 || headerMap['FSN'] === -1) {
+                        throw new Error("Missing critical columns 'Date' or 'FSN'.");
+                    }
+
+                    const newDataset = [];
+                    for (let i = 1; i < parsed.length; i++) {
+                        const row = parsed[i];
+                        if (row.length < parsed[0].length) continue;
+                        
+                        const record = {};
+                        const getVal = (col, isFloat = false) => {
+                            const idx = headerMap[col];
+                            if (idx === -1 || idx === undefined || row[idx] === undefined) return isFloat ? 0 : "";
+                            const val = row[idx].trim();
+                            return isFloat ? (parseFloat(val) || 0) : val;
+                        };
+
+                        record.Date = getVal('Date');
+                        record.FSN = getVal('FSN');
+                        record.Product_Name = getVal('Product_Name') || `Product ${record.FSN}`;
+                        record.Brand = getVal('Brand') || "Generic";
+                        record.Category = getVal('Category') || "General";
+                        record.Subcategory = getVal('Subcategory') || "Misc";
+                        record.Units_Sold = parseInt(getVal('Units_Sold', true)) || 0;
+                        record.Revenue = getVal('Revenue', true);
+                        record.Sell_Price = getVal('Sell_Price', true);
+                        record.Comp_Price = getVal('Comp_Price', true);
+                        record.Instock_Pct = getVal('Instock_Pct', true);
+                        record.Demand_Score = getVal('Demand_Score', true);
+                        record.Search_Rank = parseInt(getVal('Search_Rank', true)) || 100;
+                        record.Conversion_Rate = getVal('Conversion_Rate', true);
+                        record.Repeat_Orders = parseInt(getVal('Repeat_Orders', true)) || 0;
+
+                        newDataset.push(record);
+                    }
+                    
+                    processDataset(newDataset);
+                    
+                    if (syncDot && syncText) {
+                        syncDot.className = "status-dot status-synced";
+                        syncText.innerText = "Loaded raw_transaction_data.csv automatically";
+                    }
+                    document.getElementById('last-sync-time').innerText = new Date().toLocaleTimeString();
+                    console.log("Automatically loaded raw transaction data from local server on anomaly page.");
+                }
+            } catch (err) {
+                console.log("Could not auto-fetch raw server data on anomaly page. Falling back to embedded dataset.", err);
+            }
+        }
+
+        window.addEventListener('load', async () => {
             if (DEMO_DATA && DEMO_DATA.length > 0) {
                 document.getElementById('sync-dot').className = 'status-dot status-synced';
                 document.getElementById('sync-text').innerText = 'Demo Dataset loaded';
                 processDataset(DEMO_DATA);
             }
             updateStickyHeaders();
+
+            // Auto-load raw_transaction_data.csv from server
+            await autoLoadServerData();
         });
         window.addEventListener('resize', updateStickyHeaders);
     </script>
