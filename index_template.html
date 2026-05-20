@@ -1,0 +1,2478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FirstClub Assignment Category Intelligence Dashboard</title>
+    
+    <!-- Chart.js 4.x via cdnjs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    
+    <!-- Outfit Font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Modern Premium Dark Analytics Design System */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-surface: #161b27;
+            --border: #2a3350;
+            --accent-blue: #4f8ef7;
+            --accent-green: #2dd4a0;
+            --accent-red: #f16b6b;
+            --accent-amber: #f5a623;
+            --accent-purple: #a78bfa;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --focus-ring: 2px solid var(--accent-blue);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 400;
+            padding: 24px;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* Typography Weights Constraint: Only 400 and 500 */
+        h1, h2, h3, h4, th, .btn, .tab-btn, .metric-value {
+            font-weight: 500;
+        }
+        
+        span, p, td, input, select {
+            font-weight: 400;
+        }
+
+        /* Header Bar styling */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .fk-logo {
+            color: #ffffff;
+            background: linear-gradient(135deg, #4f8ef7 0%, #a78bfa 100%);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 15px rgba(79, 142, 247, 0.25);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-title {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        /* Level Drill-Down Tabs */
+        .drilldown-tabs {
+            display: flex;
+            gap: 4px;
+            background-color: #0f141c;
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn.active {
+            color: var(--bg-primary);
+            background-color: var(--accent-blue);
+            font-weight: 500;
+        }
+
+        /* Status Indicator */
+        .status-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            font-size: 0.85rem;
+            background-color: rgba(255, 255, 255, 0.02);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            min-width: 220px;
+        }
+
+        .status-badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        .refresh-at-label {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            white-space: nowrap;
+        }
+
+        .refresh-at-label span {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        #data-source-link {
+            display: none;
+            font-size: 0.75rem;
+            color: var(--accent-blue);
+            text-decoration: none;
+            opacity: 0.85;
+            transition: opacity 0.2s ease;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            width: 100%;
+            text-align: right;
+        }
+
+        #data-source-link:hover {
+            opacity: 1;
+            text-decoration: underline;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-synced { background-color: var(--accent-green); }
+        .status-stale { background-color: var(--accent-amber); }
+        .status-error { background-color: var(--accent-red); }
+
+        /* Sync Controls Row */
+        .sync-row {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .input-group.small-input {
+            flex: 0 0 120px;
+            min-width: 120px;
+        }
+
+        .input-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], select {
+            background-color: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            width: 100%;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 1px var(--accent-blue);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: opacity 0.2s ease;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 18px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: #0d1117;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .btn:focus {
+            outline: var(--focus-ring);
+        }
+
+        .sync-info {
+            display: none; /* moved into header status badge */
+        }
+
+        /* Filter controls */
+        .filter-row {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .period-toggle-group {
+            display: flex;
+            background-color: #0d1117;
+            padding: 3px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .period-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .period-btn.active {
+            background-color: var(--accent-purple);
+            color: #0d1117;
+            font-weight: 500;
+        }
+
+        /* KPI Grid Styling */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 108px;
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-value {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            line-height: 1.2;
+            word-break: break-all;
+        }
+
+        .kpi-delta {
+            font-size: 0.8rem;
+            margin-top: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .delta-up { color: var(--accent-green); }
+        .delta-down { color: var(--accent-red); }
+        .delta-neutral { color: var(--text-secondary); }
+
+        /* Sections and Panels */
+        .dashboard-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .dashboard-section.full-width {
+            grid-template-columns: 1fr;
+        }
+
+        .panel {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .panel-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Table custom styling */
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        th {
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        /* Badge/Tiers */
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .badge-green { background-color: rgba(45, 212, 160, 0.15); color: var(--accent-green); }
+        .badge-amber { background-color: rgba(245, 166, 35, 0.15); color: var(--accent-amber); }
+        .badge-red { background-color: rgba(241, 107, 107, 0.15); color: var(--accent-red); }
+        .badge-purple { background-color: rgba(167, 139, 250, 0.15); color: var(--accent-purple); }
+
+        /* Grid specific to stock bars and demand cards */
+        .stock-bar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .stock-item {
+            display: grid;
+            grid-template-columns: 180px 1fr 60px;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .stock-label {
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stock-progress-bg {
+            height: 12px;
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .stock-progress-fill {
+            height: 100%;
+            border-radius: 6px;
+        }
+
+        /* Demand Score Grid */
+        .demand-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+            max-height: 450px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .demand-tile {
+            background-color: #0f141c;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 110px;
+        }
+
+        .demand-tile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .demand-tile-title {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+
+        .demand-tile-score {
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        .demand-tile-footer {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        /* Anomaly alert box */
+        .anomaly-list {
+            margin-top: 12px;
+            max-height: 110px;
+            overflow-y: auto;
+            border-top: 1px solid var(--border);
+            padding-top: 10px;
+            font-size: 0.8rem;
+        }
+
+        .anomaly-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+        }
+
+        .anomaly-spike { background-color: rgba(45, 212, 160, 0.08); color: var(--accent-green); }
+        .anomaly-drop { background-color: rgba(241, 107, 107, 0.08); color: var(--accent-red); }
+
+        /* Contributor lists styling */
+        .contributor-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .contributor-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background-color: #0f141c;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .contributor-rank-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rank-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background-color: rgba(255, 255, 255, 0.05);
+            color: var(--text-secondary);
+        }
+
+        .rank-1 { background-color: #ffd700; color: #0d1117; }
+        .rank-2 { background-color: #c0c0c0; color: #0d1117; }
+        .rank-3 { background-color: #cd7f32; color: #0d1117; }
+
+        .contributor-metrics {
+            text-align: right;
+        }
+
+        /* Empty states */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-align: center;
+            flex: 1;
+        }
+
+        .empty-state-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            opacity: 0.5;
+        }
+
+        /* Data Summary Bar */
+        .data-summary-bar {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .data-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .data-summary-value {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        /* Contributors Section 3-Column Layout */
+        #module-contributors {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        @media (max-width: 1200px) {
+            #module-contributors {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 768px) {
+            #module-contributors {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1200px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            .dashboard-section {
+                grid-template-columns: 1fr;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .sync-row, .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .btn {
+                margin-top: 4px;
+            }
+            .stock-item {
+                grid-template-columns: 100px 1fr 50px;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Header Bar -->
+    <header>
+        <div class="brand-logo-container">
+            <span class="fk-logo">FirstClub Assignment</span>
+            <span class="dashboard-title">Category Intelligence Dashboard</span>
+        </div>
+
+        <!-- Sync Status Badge -->
+        <div class="status-container">
+            <div class="status-badge-row">
+                <span class="refresh-at-label">Refreshed at: <span id="last-sync-time">—</span></span>
+                <span id="sync-dot" class="status-dot status-synced"></span>
+                <span id="sync-text">Demo Dataset loaded</span>
+            </div>
+            <a id="data-source-link" href="#" target="_blank">—</a>
+        </div>
+    </header>
+
+    <!-- 2. Google Sheets & Local CSV Sync Row -->
+    <section class="sync-row" aria-label="Data Synchronization Controls">
+        <div class="input-group">
+            <label class="input-label" for="sheet-url">Google Sheet URL</label>
+            <input type="text" id="sheet-url" placeholder="Paste published Google Sheets CSV URL or standard sharing URL...">
+        </div>
+        <div class="input-group small-input">
+            <label class="input-label" for="tab-name">Tab Name</label>
+            <input type="text" id="tab-name" value="RawData">
+        </div>
+        <button class="btn btn-primary" onclick="syncGoogleSheets()">Sync Sheets</button>
+        
+        <!-- Add a high-value Local CSV uploader option for testing the generated python CSV locally -->
+        <div class="input-group small-input" style="flex: 0 0 160px; min-width: 160px;">
+            <label class="input-label" for="file-upload">Or Upload Local CSV</label>
+            <input type="file" id="file-upload" accept=".csv" style="display: none;" onchange="handleLocalCSVUpload(event)">
+            <button class="btn btn-secondary" onclick="document.getElementById('file-upload').click()" style="margin-top: 0; width: 100%;">Upload CSV File</button>
+        </div>
+
+        <!-- sync-info removed; refresh time is now in header status badge -->
+    </section>
+
+    <!-- 3. Filter Controls Row -->
+    <section class="filter-row" aria-label="Dashboard Filters">
+        <div class="filter-group">
+            <label class="input-label" for="drilldown-filter">Drilldown Level</label>
+            <select id="drilldown-filter" onchange="setDrilldownLevel(this.value)">
+                <option value="Brand" selected>Brand</option>
+                <option value="Category">Category</option>
+                <option value="Subcategory">Subcategory</option>
+                <option value="FSN">FSN</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="input-label" for="brand-filter">Brand Filter</label>
+            <select id="brand-filter" onchange="applyFilters()">
+                <option value="ALL">All Brands</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="input-label" for="cat-filter">Category Filter</label>
+            <select id="cat-filter" onchange="applyFilters()">
+                <option value="ALL">All Categories</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label class="input-label" for="subcat-filter">Subcategory Filter</label>
+            <select id="subcat-filter" onchange="applyFilters()">
+                <option value="ALL">All Subcategories</option>
+            </select>
+        </div>
+
+        <div class="filter-group" style="flex: 0 0 auto; min-width: 200px;">
+            <label class="input-label">Analysis Period</label>
+            <div class="period-toggle-group" role="group" aria-label="Time period selectors">
+                <button class="period-btn" onclick="setPeriod(7)">7D</button>
+                <button class="period-btn" onclick="setPeriod(14)">14D</button>
+                <button class="period-btn active" onclick="setPeriod(30)">30D</button>
+                <button class="period-btn" onclick="setPeriod(90)">90D</button>
+                <button class="period-btn" onclick="setPeriod(180)">6M</button>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <label class="input-label" for="insight-filter">Module Filter</label>
+            <select id="insight-filter" onchange="applyInsightFilter()">
+                <option value="ALL">All Insight Modules</option>
+                <option value="growth">Growth & Trend</option>
+                <option value="instock">In-Stock Health</option>
+                <option value="pricing">Pricing Intelligence</option>
+                <option value="contributors">Contributors</option>
+                <option value="demand">Demand Weights</option>
+            </select>
+        </div>
+
+        <button class="btn btn-secondary" style="margin-top: 0; height: 38px;" onclick="exportFilteredCSV()">Export CSV</button>
+    </section>
+
+    <!-- Inline Alerts Box -->
+    <div id="error-alert" style="display: none; background-color: rgba(241, 107, 107, 0.1); border: 1px solid var(--accent-red); border-radius: 8px; padding: 12px; margin-bottom: 20px; color: var(--accent-red); font-size: 0.9rem;">
+    </div>
+
+    <!-- Data Summary Bar -->
+    <div id="data-summary-bar" class="data-summary-bar" style="margin-bottom: 24px;">
+        <!-- Filled by JS -->
+    </div>
+
+    <!-- 4. KPI Grid -->
+    <section class="kpi-grid" aria-label="Key Performance Indicators">
+        <!-- 1. Total Revenue -->
+        <div class="kpi-card">
+            <span class="kpi-label" title="Total sales revenue generated from all matching transactions in active period">Total Revenue</span>
+            <span id="kpi-revenue" class="kpi-value">₹0</span>
+            <span id="kpi-revenue-delta" class="kpi-delta delta-neutral">--</span>
+        </div>
+        <!-- 2. Units Sold -->
+        <div class="kpi-card">
+            <span class="kpi-label" title="Total quantity of items sold in matching transactions">Units Sold</span>
+            <span id="kpi-units" class="kpi-value">0</span>
+            <span id="kpi-units-delta" class="kpi-delta delta-neutral">--</span>
+        </div>
+        <!-- 3. Avg In-Stock -->
+        <div class="kpi-card">
+            <span class="kpi-label" title="Average inventory availability rate across active products (benchmark is 70%)">Avg In-Stock %</span>
+            <span id="kpi-instock" class="kpi-value">0%</span>
+            <span id="kpi-instock-delta" class="kpi-delta delta-neutral">--</span>
+        </div>
+        <!-- 4. Avg Selling Price (ASP) -->
+        <div class="kpi-card">
+            <span class="kpi-label" title="Average Selling Price per unit sold (Total Revenue / Total Units)">Avg Selling Price (ASP)</span>
+            <span id="kpi-asp" class="kpi-value">₹0</span>
+            <span id="kpi-asp-delta" class="kpi-delta delta-neutral">--</span>
+        </div>
+        <!-- 5. Growing Entities -->
+        <div class="kpi-card">
+            <span class="kpi-label" title="Number of unique products/brands showing positive units sold growth in second half vs. first half of active period">Growing Entities</span>
+            <span id="kpi-growing" class="kpi-value">0</span>
+            <span id="kpi-growing-delta" class="kpi-delta delta-neutral">--</span>
+        </div>
+        <!-- 6. OOS Risk -->
+        <div class="kpi-card">
+            <span class="kpi-label" title="Number of products whose latest reported stock level fell below critical threshold of 40%">OOS Risk Items</span>
+            <span id="kpi-oos" class="kpi-value">0</span>
+            <span id="kpi-oos-delta" class="kpi-delta delta-neutral">--</span>
+        </div>
+        <!-- 7. Price Increases -->
+        <div class="kpi-card">
+            <span class="kpi-label" title="Number of products with a higher average price in the second half compared to the first half of active period">Price Increases</span>
+            <span id="kpi-hikes" class="kpi-value">0</span>
+            <span id="kpi-hikes-delta" class="kpi-delta delta-neutral">--</span>
+        </div>
+        <!-- 8. Competitive Index Advantage -->
+        <div class="kpi-card">
+            <span class="kpi-label" title="Number of transactions where our selling price was lower than the competitor benchmark price">CI Advantage</span>
+            <span id="kpi-ci" class="kpi-value">0</span>
+            <span id="kpi-ci-delta" class="kpi-delta delta-neutral">--</span>
+        </div>
+    </section>
+
+    <!-- 5. SECTION: Growth & Trend -->
+    <section id="module-growth" class="dashboard-section" aria-label="Growth and Trend Analysis">
+        <!-- Panel A: Period over Period Growth Chart -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Period-over-Period Growth</h2>
+                    <p class="panel-subtitle">Calculated by first-half vs. second-half volume comparison</p>
+                </div>
+            </div>
+            <div style="position: relative; flex: 1; min-height: 250px;">
+                <canvas id="growthChart" aria-label="Period Growth Bar Chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Panel B: Daily Units Sold Trend with Anomaly Overlays -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Sales Volume & Anomaly Trend</h2>
+                    <p class="panel-subtitle">Day-on-day daily units sold with rolling average triggers</p>
+                </div>
+            </div>
+            <div style="position: relative; flex: 1; min-height: 200px;">
+                <canvas id="trendChart" aria-label="Daily Units Sold Trend Chart"></canvas>
+            </div>
+            <div class="anomaly-list" id="anomaly-list-container">
+                <!-- Javascript fills this -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Anomaly Report CTA Card -->
+    <section class="dashboard-section full-width" style="margin-bottom: 24px;">
+        <div class="panel" style="border-color: var(--accent-amber); background: linear-gradient(135deg, rgba(245,166,35,0.04) 0%, rgba(241,107,107,0.04) 100%);">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; padding: 8px 4px;">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <span style="font-size: 2rem;">⚡</span>
+                    <div>
+                        <h2 class="panel-title" style="color: var(--accent-amber); margin-bottom: 4px;">Product-Level Spike & Drop Report</h2>
+                        <p class="panel-subtitle">Latest-day sales vs 7-day baseline per product ID (FSN). 4-tier severity flags: Critical Spike, Spike, Drop, Critical Drop.</p>
+                    </div>
+                </div>
+                <a href="anomaly_report.html" target="_blank" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 24px; background: linear-gradient(135deg, var(--accent-amber), #f16b6b); color: #0d1117; border-radius: 8px; font-size: 0.9rem; font-weight: 500; text-decoration: none; white-space: nowrap; transition: opacity 0.2s; box-shadow: 0 4px 15px rgba(245,166,35,0.3);" onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+                    Open Anomaly Report ↗
+                </a>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- 6. SECTION: In-Stock Health -->
+    <section id="module-instock" class="dashboard-section full-width" aria-label="Stock Availability Analysis">
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">In-Stock Health Index</h2>
+                    <p class="panel-subtitle">Green: &ge;70% | Amber: 50&ndash;70% | Red: &lt;50% availability</p>
+                </div>
+            </div>
+            <div class="stock-bar-list" id="stock-bars-container">
+                <!-- Dynamic progress bars -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. SECTION: Pricing Intelligence -->
+    <section id="module-pricing" class="dashboard-section" aria-label="Pricing Intelligence">
+        <!-- Panel C: Price Changes List -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Price Change Tracking</h2>
+                    <p class="panel-subtitle">Period-over-Period weighted average price shifts per entity</p>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Entity</th>
+                            <th>Original Price</th>
+                            <th>Current Price</th>
+                            <th>Delta %</th>
+                            <th>Direction</th>
+                        </tr>
+                    </thead>
+                    <tbody id="price-changes-table-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Panel D: Competitive Index Table -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Competitive Price Comparison (CI)</h2>
+                    <p class="panel-subtitle">Weighted average sell price comparison vs competitor benchmarks</p>
+                </div>
+            </div>
+            <div class="table-container" id="comp-table-container">
+                <table id="comp-table">
+                    <thead>
+                        <tr>
+                            <th>Entity</th>
+                            <th>Our Price</th>
+                            <th>Comp Price</th>
+                            <th>Gap %</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comp-table-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. SECTION: Contributors -->
+    <section id="module-contributors" class="dashboard-section" aria-label="Revenue and Unit Performance Rankings">
+        <!-- Panel E: Top 5 Contributors -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Top 5 Revenue Contributors</h2>
+                    <p class="panel-subtitle">Primary volume & revenue engines for active selection</p>
+                </div>
+            </div>
+            <div class="contributor-list" id="top-contributors-container">
+                <!-- Badges filled by JS -->
+            </div>
+        </div>
+
+        <!-- New Panel: Revenue Share Donut Chart -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Revenue Share by Entity</h2>
+                    <p class="panel-subtitle">Distribution of total period revenue</p>
+                </div>
+            </div>
+            <div style="position: relative; flex: 1; min-height: 250px; display: flex; align-items: center; justify-content: center;">
+                <canvas id="revenueShareChart" aria-label="Revenue Share Donut Chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Panel F: Bottom Performers -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Bottom 4 Performers</h2>
+                    <p class="panel-subtitle">Underperforming items sorted ascending by total period revenue</p>
+                </div>
+            </div>
+            <div class="contributor-list" id="bottom-contributors-container">
+                <!-- Bottom items filled by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. SECTION: Demand Weights -->
+    <section id="module-demand" class="dashboard-section full-width" aria-label="Product Demand Index">
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Entity Demand Score Weights</h2>
+                    <p class="panel-subtitle">Weighted demand score metrics across selection: 40% Search Rank | 30% Conversion Rate | 30% Repeat Ratio</p>
+                </div>
+            </div>
+            <div class="demand-grid" id="demand-tiles-container">
+                <!-- Cards generated dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- SETUP DOCUMENTATION & README -->
+    <section class="panel" style="margin-top: 40px; border-color: var(--accent-purple);" aria-label="System Documentation">
+        <div class="panel-header" style="border-bottom-color: var(--accent-purple);">
+            <h2 class="panel-title" style="color: var(--accent-purple);">SYSTEM SETUP & README</h2>
+        </div>
+        <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);">
+            <h3 style="color: var(--text-primary); margin: 16px 0 8px 0; font-size: 1rem;">1. Google Sheets Live Integration</h3>
+            <p style="margin-bottom: 8px;">To feed the dashboard with live, auto-updating data directly from your master workbook, configure Google Sheets as follows:</p>
+            <ol style="margin-left: 20px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
+                <li>Open your Google Sheet containing the transaction records.</li>
+                <li>Go to <strong>File &gt; Share &gt; Publish to web</strong>.</li>
+                <li>Choose the sheet tab containing your data (e.g. <code>RawData</code>).</li>
+                <li>Set the export type to <strong>Comma-separated values (.csv)</strong>.</li>
+                <li>Click <strong>Publish</strong> and copy the generated link.</li>
+                <li>Paste the URL directly in the URL input bar above and hit <strong>Sync Sheets</strong>.</li>
+            </ol>
+            
+            <h3 style="color: var(--text-primary); margin: 16px 0 8px 0; font-size: 1rem;">2. Schema & CSV Columns Alignment</h3>
+            <p style="margin-bottom: 8px;">The system implements robust, fuzzy column mapping that is case-insensitive and replaces spaces/underscores. Make sure your sheets/CSV contains these column names:</p>
+            <table style="width: 100%; border: 1px solid var(--border); margin: 12px 0;">
+                <thead>
+                    <tr>
+                        <th style="padding: 6px 12px;">Standard Column</th>
+                        <th style="padding: 6px 12px;">Fuzzy Aliases Allowed</th>
+                        <th style="padding: 6px 12px;">Expectation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td style="padding: 6px 12px;">Date</td><td style="padding: 6px 12px;">date, Transaction_Date, date_str</td><td style="padding: 6px 12px;">YYYY-MM-DD</td></tr>
+                    <tr><td style="padding: 6px 12px;">FSN</td><td style="padding: 6px 12px;">fsn, product_id, sku</td><td style="padding: 6px 12px;">Unique FirstClub Serial Number</td></tr>
+                    <tr><td style="padding: 6px 12px;">Units_Sold</td><td style="padding: 6px 12px;">units, units_sold, Qty, quantity</td><td style="padding: 6px 12px;">Integer count</td></tr>
+                    <tr><td style="padding: 6px 12px;">Revenue</td><td style="padding: 6px 12px;">revenue, total_revenue, sales</td><td style="padding: 6px 12px;">INR values</td></tr>
+                    <tr><td style="padding: 6px 12px;">Sell_Price</td><td style="padding: 6px 12px;">price, sell_price, selling_price, inr_price</td><td style="padding: 6px 12px;">Transaction selling price</td></tr>
+                    <tr><td style="padding: 6px 12px;">Comp_Price</td><td style="padding: 6px 12px;">comp_price, competitor_price, comp_price_inr</td><td style="padding: 6px 12px;">Benchmark comp price (INR)</td></tr>
+                    <tr><td style="padding: 6px 12px;">Instock_Pct</td><td style="padding: 6px 12px;">instock_pct, stock_pct, instock, availability</td><td style="padding: 6px 12px;">Float 0 to 100</td></tr>
+                </tbody>
+            </table>
+            
+            <h3 style="color: var(--text-primary); margin: 16px 0 8px 0; font-size: 1rem;">3. Local File Offline Processing</h3>
+            <p>If you have generated the local dataset using our Python generation script (<code>raw_transaction_data.csv</code>), you don't even need Google Sheets! Click the <strong>Upload CSV File</strong> button in the sync row to run full aggregation models locally in the browser immediately.</p>
+        </div>
+    </section>
+
+    <!-- CORE LOGIC: JS ENGINE -->
+    <script>
+        // High-Quality Realistic Demo Dataset generated during prompt compilation (fallback)
+        const DEMO_DATA = /* DEMO_DATA_PLACEHOLDER */;
+
+        // Active State variables
+        let dataset = [...DEMO_DATA];
+        let drilldownLevel = 'Brand'; // 'Brand', 'Category', 'Subcategory', 'FSN'
+        let selectedPeriod = 30;     // 7, 14, 30, 90, 180 (days)
+        let activeBrand = 'ALL';
+        let activeCategory = 'ALL';
+        let activeSubcategory = 'ALL';
+
+        // Data source tracking for the header link
+        // type: 'demo' | 'sheets' | 'csv'
+        // meta: { url } for sheets, { name, content } for csv
+        let dataSourceInfo = { type: 'demo', meta: {} };
+        let csvBlobUrl = null; // revocable blob URL for CSV download
+        
+        // Chart handles
+        let growthChartInstance = null;
+        let trendChartInstance = null;
+        let revenueShareChartInstance = null;
+
+        // On document load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Dataset is pre-sorted for O(1) date lookups
+            dataset.sort((a, b) => a.Date > b.Date ? 1 : (a.Date < b.Date ? -1 : 0));
+            initializeSyncState();
+            initializeDropdowns();
+            processDataAndRender();
+        });
+
+        // Format Currency in Indian numbering system
+        function formatINR(value) {
+            if (value === undefined || isNaN(value)) return "₹0";
+            const num = parseFloat(value);
+            if (num >= 10000000) {
+                return "₹" + (num / 10000000).toFixed(2) + " Cr";
+            } else if (num >= 100000) {
+                return "₹" + (num / 100000).toFixed(2) + " L";
+            } else if (num >= 1000) {
+                return "₹" + Math.round(num).toLocaleString('en-IN');
+            } else {
+                return "₹" + Math.round(num);
+            }
+        }
+
+        // Setup drop selectors on load
+        function initializeDropdowns() {
+            const brands = new Set();
+            const categories = new Set();
+            const subcategories = new Set();
+
+            dataset.forEach(row => {
+                if (row.Brand) brands.add(row.Brand);
+                if (row.Category) categories.add(row.Category);
+                if (row.Subcategory) subcategories.add(row.Subcategory);
+            });
+
+            populateSelect('brand-filter', Array.from(brands).sort(), 'All Brands');
+            populateSelect('cat-filter', Array.from(categories).sort(), 'All Categories');
+            populateSelect('subcat-filter', Array.from(subcategories).sort(), 'All Subcategories');
+        }
+
+        function populateSelect(id, list, allText) {
+            const select = document.getElementById(id);
+            // Save currently selected option
+            const currVal = select.value || 'ALL';
+            
+            select.innerHTML = `<option value="ALL">${allText}</option>`;
+            list.forEach(val => {
+                select.innerHTML += `<option value="${val}">${val}</option>`;
+            });
+            
+            // Restore previous choice if possible
+            if (list.includes(currVal)) {
+                select.value = currVal;
+            } else {
+                select.value = 'ALL';
+            }
+        }
+
+        // Drilldown granularity toggle
+        function setDrilldownLevel(level) {
+            drilldownLevel = level;
+            
+            // Sync dropdown filter
+            const filterEl = document.getElementById('drilldown-filter');
+            if (filterEl) {
+                filterEl.value = level;
+            }
+
+            processDataAndRender();
+        }
+
+        // Period filter toggle
+        function setPeriod(days) {
+            selectedPeriod = days;
+            
+            // Update UI buttons
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                const label = btn.innerText.trim();
+                let isMatch = false;
+                if (days === 7 && label === '7D') isMatch = true;
+                if (days === 14 && label === '14D') isMatch = true;
+                if (days === 30 && label === '30D') isMatch = true;
+                if (days === 90 && label === '90D') isMatch = true;
+                if (days === 180 && label === '6M') isMatch = true;
+                
+                if (isMatch) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            processDataAndRender();
+        }
+
+        // Insight Module filtering
+        function applyInsightFilter() {
+            const val = document.getElementById('insight-filter').value;
+            const sections = [
+                { id: 'module-growth', val: 'growth' },
+                { id: 'module-instock', val: 'instock' },
+                { id: 'module-pricing', val: 'pricing' },
+                { id: 'module-contributors', val: 'contributors' },
+                { id: 'module-demand', val: 'demand' }
+            ];
+            
+            sections.forEach(s => {
+                const el = document.getElementById(s.id);
+                if (val === 'ALL' || val === s.val) {
+                    el.style.display = '';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+        }
+
+        function applyFilters() {
+            activeBrand = document.getElementById('brand-filter').value;
+            activeCategory = document.getElementById('cat-filter').value;
+            activeSubcategory = document.getElementById('subcat-filter').value;
+            processDataAndRender();
+        }
+
+        // Primary Aggregator & UI Calculation Engine
+        function processDataAndRender() {
+            // 1. Get date range — dataset is pre-sorted so first/last element is O(1)
+            if (dataset.length === 0) return;
+            const latestDateStr = dataset[dataset.length - 1].Date;
+            const latestDate = new Date(latestDateStr);
+            const cutoffDate = new Date(latestDate);
+            cutoffDate.setDate(latestDate.getDate() - selectedPeriod + 1);
+
+            // Filter transactions by Period, Brand, Category, Subcategory
+            const filteredRows = dataset.filter(r => {
+                const dDate = new Date(r.Date);
+                if (dDate < cutoffDate) return false;
+                
+                if (activeBrand !== 'ALL' && r.Brand !== activeBrand) return false;
+                if (activeCategory !== 'ALL' && r.Category !== activeCategory) return false;
+                if (activeSubcategory !== 'ALL' && r.Subcategory !== activeSubcategory) return false;
+                
+                return true;
+            });
+
+            // 2. Perform Grouping/Aggregation based on selected Drill-down level (Brand / Category / Subcategory / FSN)
+            const grouped = {};
+            filteredRows.forEach(row => {
+                let key = row.Brand;
+                if (drilldownLevel === 'Category') key = row.Category;
+                else if (drilldownLevel === 'Subcategory') key = row.Subcategory;
+                else if (drilldownLevel === 'FSN') key = `${row.Product_Name} (${row.FSN})`;
+
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        key: key,
+                        revenue: 0,
+                        units: 0,
+                        instockSum: 0,
+                        instockCount: 0,
+                        sellPriceSum: 0,
+                        compPriceSum: 0,
+                        priceCount: 0,
+                        demandSum: 0,
+                        demandCount: 0,
+                        firstHalfUnits: 0,
+                        secondHalfUnits: 0,
+                        firstHalfRevenue: 0,
+                        secondHalfRevenue: 0,
+                        firstHalfAvgInstock: 0,
+                        secondHalfAvgInstock: 0,
+                        firstHalfASP: 0,
+                        secondHalfASP: 0,
+                        growth: 0,
+                        revenueGrowth: 0,
+                        rawRows: [],
+                        priceHist: []
+                    };
+                }
+                
+                const g = grouped[key];
+                g.revenue += row.Revenue;
+                g.units += row.Units_Sold;
+                
+                if (row.Instock_Pct !== undefined && !isNaN(row.Instock_Pct)) {
+                    g.instockSum += row.Instock_Pct;
+                    g.instockCount++;
+                }
+                
+                if (row.Sell_Price !== undefined && !isNaN(row.Sell_Price)) {
+                    g.sellPriceSum += row.Sell_Price;
+                    g.priceCount++;
+                }
+                
+                if (row.Comp_Price !== undefined && !isNaN(row.Comp_Price)) {
+                    g.compPriceSum += row.Comp_Price;
+                }
+                
+                if (row.Demand_Score !== undefined && !isNaN(row.Demand_Score)) {
+                    g.demandSum += row.Demand_Score;
+                    g.demandCount++;
+                }
+
+                g.rawRows.push(row);
+            });
+
+            // Mid-point cutoff for Growth PoP (First Half vs Second Half)
+            const halfDays = Math.ceil(selectedPeriod / 2);
+            const midCutoffDate = new Date(latestDate);
+            midCutoffDate.setDate(latestDate.getDate() - halfDays + 1);
+
+            Object.keys(grouped).forEach(k => {
+                const g = grouped[k];
+                // Raw rows are already sorted chronologically from the global dataset sort
+
+                let fHalfUnits = 0, sHalfUnits = 0;
+                let fHalfRevenue = 0, sHalfRevenue = 0;
+                let fHalfInstockSum = 0, fHalfInstockCount = 0;
+                let sHalfInstockSum = 0, sHalfInstockCount = 0;
+
+                g.rawRows.forEach(r => {
+                    const d = new Date(r.Date);
+                    const isFirstHalf = d < midCutoffDate;
+                    if (isFirstHalf) {
+                        fHalfUnits += r.Units_Sold;
+                        fHalfRevenue += r.Revenue;
+                        if (r.Instock_Pct !== undefined && !isNaN(r.Instock_Pct)) {
+                            fHalfInstockSum += r.Instock_Pct;
+                            fHalfInstockCount++;
+                        }
+                    } else {
+                        sHalfUnits += r.Units_Sold;
+                        sHalfRevenue += r.Revenue;
+                        if (r.Instock_Pct !== undefined && !isNaN(r.Instock_Pct)) {
+                            sHalfInstockSum += r.Instock_Pct;
+                            sHalfInstockCount++;
+                        }
+                    }
+                });
+
+                g.firstHalfUnits = fHalfUnits;
+                g.secondHalfUnits = sHalfUnits;
+                g.firstHalfRevenue = fHalfRevenue;
+                g.secondHalfRevenue = sHalfRevenue;
+                
+                g.firstHalfAvgInstock = fHalfInstockCount > 0 ? (fHalfInstockSum / fHalfInstockCount) : 0;
+                g.secondHalfAvgInstock = sHalfInstockCount > 0 ? (sHalfInstockSum / sHalfInstockCount) : 0;
+
+                g.firstHalfASP = fHalfUnits > 0 ? (fHalfRevenue / fHalfUnits) : 0;
+                g.secondHalfASP = sHalfUnits > 0 ? (sHalfRevenue / sHalfUnits) : 0;
+
+                // PoP Growth Calculations (first-half vs second-half)
+                g.growth = fHalfUnits > 0 ? ((sHalfUnits - fHalfUnits) / fHalfUnits) * 100 : 0;
+                g.revenueGrowth = fHalfRevenue > 0 ? ((sHalfRevenue - fHalfRevenue) / fHalfRevenue) * 100 : 0;
+            });
+
+            // 3. Render KPIs, charts, data summaries, and lists
+            renderKPIs(filteredRows, grouped, latestDate, cutoffDate);
+            renderDataSummary(filteredRows, dataset);
+            renderGrowthChart(grouped);
+            renderTrendChart(filteredRows, latestDate, cutoffDate);
+            renderStockBars(grouped);
+            renderPriceTracking(filteredRows, grouped);
+            renderContributors(grouped);
+            renderRevenueShareChart(grouped);
+            renderDemandGrid(grouped);
+        }
+
+        // Render KPI metrics cards
+        function renderKPIs(rows, grouped, latestDate, cutoffDate) {
+            let totalRevenue = 0;
+            let totalUnits = 0;
+            let instockSum = 0, instockCount = 0;
+            let competitiveAdvantageCount = 0;
+            let totalMatchingPositions = 0;
+            let oosCount = 0;
+            let growingCount = 0;
+            let priceHikes = 0;
+
+            // Compute selection aggregates for PoP deltas
+            let firstHalfRevenue = 0, secondHalfRevenue = 0;
+            let firstHalfUnits = 0, secondHalfUnits = 0;
+            let firstHalfInstockSum = 0, firstHalfInstockCount = 0;
+            let secondHalfInstockSum = 0, secondHalfInstockCount = 0;
+
+            const halfDays = Math.ceil(selectedPeriod / 2);
+            const midCutoffDate = new Date(latestDate);
+            midCutoffDate.setDate(latestDate.getDate() - halfDays + 1);
+
+            rows.forEach(r => {
+                totalRevenue += r.Revenue;
+                totalUnits += r.Units_Sold;
+                
+                if (r.Instock_Pct !== undefined && !isNaN(r.Instock_Pct)) {
+                    instockSum += r.Instock_Pct;
+                    instockCount++;
+                }
+
+                if (r.Sell_Price !== undefined && r.Comp_Price !== undefined && r.Comp_Price > 0) {
+                    totalMatchingPositions++;
+                    if (r.Sell_Price < r.Comp_Price) {
+                        competitiveAdvantageCount++;
+                    }
+                }
+
+                const d = new Date(r.Date);
+                if (d < midCutoffDate) {
+                    firstHalfRevenue += r.Revenue;
+                    firstHalfUnits += r.Units_Sold;
+                    if (r.Instock_Pct !== undefined && !isNaN(r.Instock_Pct)) {
+                        firstHalfInstockSum += r.Instock_Pct;
+                        firstHalfInstockCount++;
+                    }
+                } else {
+                    secondHalfRevenue += r.Revenue;
+                    secondHalfUnits += r.Units_Sold;
+                    if (r.Instock_Pct !== undefined && !isNaN(r.Instock_Pct)) {
+                        secondHalfInstockSum += r.Instock_Pct;
+                        secondHalfInstockCount++;
+                    }
+                }
+            });
+
+            // Compute metrics per drill-down entity
+            const entities = Object.values(grouped);
+            entities.forEach(e => {
+                // Growing Entities are unique entities with positive Units growth
+                if (e.growth > 0) growingCount++;
+                
+                // Evaluate OOS Risk for latest date in active selection
+                const latestRow = e.rawRows[e.rawRows.length - 1];
+                if (latestRow && latestRow.Instock_Pct < 40) {
+                    oosCount++;
+                }
+
+                // Evaluate price hikes based on first half vs second half ASP comparison
+                if (e.firstHalfUnits > 0 && e.secondHalfUnits > 0) {
+                    if (e.secondHalfASP > e.firstHalfASP + 0.01) {
+                        priceHikes++;
+                    }
+                } else if (e.rawRows.length > 1) {
+                    const firstPrice = e.rawRows[0].Sell_Price;
+                    const lastPrice = e.rawRows[e.rawRows.length - 1].Sell_Price;
+                    if (lastPrice > firstPrice) priceHikes++;
+                }
+            });
+
+            // Set metric content
+            document.getElementById('kpi-revenue').innerText = formatINR(totalRevenue);
+            document.getElementById('kpi-units').innerText = totalUnits.toLocaleString('en-IN');
+            
+            const avgInstock = instockCount > 0 ? (instockSum / instockCount) : 0;
+            document.getElementById('kpi-instock').innerText = avgInstock.toFixed(1) + "%";
+            
+            const overallASP = totalUnits > 0 ? (totalRevenue / totalUnits) : 0;
+            document.getElementById('kpi-asp').innerText = formatINR(overallASP);
+            
+            document.getElementById('kpi-growing').innerText = growingCount;
+            document.getElementById('kpi-oos').innerText = oosCount;
+            document.getElementById('kpi-hikes').innerText = priceHikes;
+            document.getElementById('kpi-ci').innerText = competitiveAdvantageCount;
+
+            // PoP Deltas Calculations
+            const revDelta = firstHalfRevenue > 0 ? ((secondHalfRevenue - firstHalfRevenue) / firstHalfRevenue) * 100 : 0;
+            const unitsDelta = firstHalfUnits > 0 ? ((secondHalfUnits - firstHalfUnits) / firstHalfUnits) * 100 : 0;
+
+            const firstHalfAvgInstock = firstHalfInstockCount > 0 ? (firstHalfInstockSum / firstHalfInstockCount) : 0;
+            const secondHalfAvgInstock = secondHalfInstockCount > 0 ? (secondHalfInstockSum / secondHalfInstockCount) : 0;
+            const instockDelta = secondHalfAvgInstock - firstHalfAvgInstock;
+
+            const firstHalfASP = firstHalfUnits > 0 ? (firstHalfRevenue / firstHalfUnits) : 0;
+            const secondHalfASP = secondHalfUnits > 0 ? (secondHalfRevenue / secondHalfUnits) : 0;
+            const aspDelta = firstHalfASP > 0 ? ((secondHalfASP - firstHalfASP) / firstHalfASP) * 100 : 0;
+
+            // Set delta visual badges
+            setDeltaUI('kpi-revenue-delta', revDelta, "% PoP");
+            setDeltaUI('kpi-units-delta', unitsDelta, "% PoP");
+            setDeltaUI('kpi-instock-delta', instockDelta, " pp vs last period");
+            setDeltaUI('kpi-asp-delta', aspDelta, "% PoP");
+
+            // Growing entities info (percentage of portfolio growing)
+            const growingPct = entities.length > 0 ? (growingCount / entities.length) * 100 : 0;
+            setInfoUI('kpi-growing-delta', `&bull; ${growingPct.toFixed(1)}% of entities (${growingCount} of ${entities.length})`, growingPct >= 50 ? 'good' : 'neutral');
+
+            // OOS Risk Items info (exact count and warning badge)
+            setInfoUI('kpi-oos-delta', oosCount > 0 ? `▲ ${oosCount} items at risk (&lt;40%)` : `&bull; No critical OOS items`, oosCount > 0 ? 'bad' : 'good');
+
+            // Price increases info
+            setInfoUI('kpi-hikes-delta', priceHikes > 0 ? `▲ ${priceHikes} hikes detected PoP` : `&bull; No price hikes PoP`, priceHikes > 0 ? 'bad' : 'good');
+
+            // CI advantage info (percentage of matches)
+            const ciPct = totalMatchingPositions > 0 ? (competitiveAdvantageCount / totalMatchingPositions) * 100 : 0;
+            setInfoUI('kpi-ci-delta', ciPct > 0 ? `▲ ${ciPct.toFixed(1)}% of matches` : `&bull; No competitive positions`, ciPct >= 50 ? 'good' : 'neutral');
+        }
+
+        function setDeltaUI(id, deltaVal, suffix = "% PoP") {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (deltaVal > 0) {
+                el.className = "kpi-delta delta-up";
+                el.innerHTML = `▲ +${deltaVal.toFixed(1)}${suffix}`;
+            } else if (deltaVal < 0) {
+                el.className = "kpi-delta delta-down";
+                el.innerHTML = `▼ ${deltaVal.toFixed(1)}${suffix}`;
+            } else {
+                el.className = "kpi-delta delta-neutral";
+                el.innerHTML = `&bull; ${deltaVal.toFixed(1)}${suffix}`;
+            }
+        }
+
+        function setInfoUI(id, text, status) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (status === 'good') {
+                el.className = "kpi-delta delta-up";
+            } else if (status === 'bad') {
+                el.className = "kpi-delta delta-down";
+            } else {
+                el.className = "kpi-delta delta-neutral";
+            }
+            el.innerHTML = text;
+        }
+
+        // Render Horizontal growth bar chart (Units and Revenue Growth side-by-side)
+        function renderGrowthChart(grouped) {
+            const canvasEl = document.getElementById('growthChart');
+            const parent = canvasEl.parentNode;
+            
+            // Re-create canvas to avoid chart reuse bugs
+            parent.innerHTML = '<canvas id="growthChart" aria-label="Period Growth Bar Chart"></canvas>';
+            const ctx = document.getElementById('growthChart').getContext('2d');
+            
+            if (growthChartInstance) {
+                growthChartInstance.destroy();
+            }
+
+            const sorted = Object.values(grouped).sort((a,b) => b.growth - a.growth).slice(0, 15);
+            const labels = sorted.map(s => s.key);
+            const unitsGrowthData = sorted.map(s => s.growth);
+            const revenueGrowthData = sorted.map(s => s.revenueGrowth);
+
+            if (labels.length === 0) {
+                showChartEmptyState('growthChart');
+                return;
+            }
+
+            growthChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Units Growth %',
+                            data: unitsGrowthData,
+                            backgroundColor: '#4f8ef7',
+                            borderWidth: 0,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Revenue Growth %',
+                            data: revenueGrowthData,
+                            backgroundColor: '#a78bfa',
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            display: true,
+                            labels: { color: '#e6edf3', font: { family: 'Outfit' } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.x.toFixed(2)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#2a3350' },
+                            ticks: { color: '#8b949e', font: { family: 'Outfit' } }
+                        },
+                        y: {
+                            grid: { display: false },
+                            ticks: { color: '#e6edf3', font: { family: 'Outfit', weight: 500 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render Daily trend chart with anomaly filters
+        function renderTrendChart(rows, latestDate, cutoffDate) {
+            const canvasEl = document.getElementById('trendChart');
+            const parent = canvasEl.parentNode;
+            
+            // Re-create canvas
+            parent.innerHTML = '<canvas id="trendChart" aria-label="Daily Units Sold Trend Chart"></canvas>';
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            
+            if (trendChartInstance) {
+                trendChartInstance.destroy();
+            }
+
+            // Aggregate units by Date
+            const dailyData = {};
+            rows.forEach(r => {
+                if (!dailyData[r.Date]) dailyData[r.Date] = 0;
+                dailyData[r.Date] += r.Units_Sold;
+            });
+
+            const dates = Object.keys(dailyData).sort();
+            const values = dates.map(d => dailyData[d]);
+
+            if (dates.length === 0) {
+                showChartEmptyState('trendChart');
+                return;
+            }
+
+            // Compute trailing 7-day rolling average & anomalies
+            const rollingAvg = [];
+            const anomalies = [];
+            
+            for (let i = 0; i < values.length; i++) {
+                let sum = 0;
+                let count = 0;
+                for (let j = Math.max(0, i - 6); j <= i; j++) {
+                    sum += values[j];
+                    count++;
+                }
+                const avg = sum / count;
+                rollingAvg.push(avg);
+
+                // Anomaly triggers (Spike: val > 2x avg, Drop: val < 0.5x avg)
+                if (i >= 7) { // Skip initial days to build baseline
+                    const prevAvg = rollingAvg[i-1];
+                    if (values[i] > 2 * prevAvg) {
+                        anomalies.push({ date: dates[i], type: 'SPIKE', value: values[i], threshold: prevAvg });
+                    } else if (values[i] < 0.5 * prevAvg) {
+                        anomalies.push({ date: dates[i], type: 'DROP', value: values[i], threshold: prevAvg });
+                    }
+                }
+            }
+
+            // Populate Anomaly Alert Box
+            const box = document.getElementById('anomaly-list-container');
+            box.innerHTML = '';
+            if (anomalies.length === 0) {
+                box.innerHTML = `<div style="color: var(--text-secondary); text-align: center;">No volume anomalies detected in this window.</div>`;
+            } else {
+                anomalies.sort((a,b) => b.date.localeCompare(a.date)).forEach(a => {
+                    const isSpike = a.type === 'SPIKE';
+                    const devPct = ((a.value - a.threshold)/a.threshold * 100).toFixed(0);
+                    box.innerHTML += `
+                        <div class="anomaly-item ${isSpike ? 'anomaly-spike' : 'anomaly-drop'}">
+                            <span>● <strong>${a.date}</strong>: Daily Sales ${isSpike ? 'Spike' : 'Drop'} (${a.value} units)</span>
+                            <span>${isSpike ? '+' : ''}${devPct}% vs 7D average</span>
+                        </div>`;
+                });
+            }
+
+            trendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [
+                        {
+                            label: 'Daily Sales',
+                            data: values,
+                            borderColor: '#4f8ef7',
+                            backgroundColor: 'rgba(79, 142, 247, 0.05)',
+                            fill: true,
+                            tension: 0.15,
+                            borderWidth: 2,
+                            pointBackgroundColor: '#4f8ef7',
+                            pointRadius: 3
+                        },
+                        {
+                            label: '7D Rolling Avg',
+                            data: rollingAvg,
+                            borderColor: '#a78bfa',
+                            borderWidth: 1.5,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e6edf3', font: { family: 'Outfit' } }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#2a3350' },
+                            ticks: { color: '#8b949e', font: { family: 'Outfit' } }
+                        },
+                        y: {
+                            grid: { color: '#2a3350' },
+                            ticks: { color: '#8b949e', font: { family: 'Outfit' } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render In-stock bars
+        function renderStockBars(grouped) {
+            const container = document.getElementById('stock-bars-container');
+            container.innerHTML = '';
+            
+            const list = Object.values(grouped).map(g => {
+                return {
+                    key: g.key,
+                    pct: g.instockCount > 0 ? (g.instockSum / g.instockCount) : 0
+                };
+            }).sort((a,b) => a.pct - b.pct); // Highlight lowest stock items at top
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="empty-state">No stock data available.</div>`;
+                return;
+            }
+
+            list.forEach(item => {
+                let color = 'var(--accent-green)';
+                let badgeClass = 'badge-green';
+                if (item.pct < 50) {
+                    color = 'var(--accent-red)';
+                    badgeClass = 'badge-red';
+                } else if (item.pct < 70) {
+                    color = 'var(--accent-amber)';
+                    badgeClass = 'badge-amber';
+                }
+
+                container.innerHTML += `
+                    <div class="stock-item">
+                        <span class="stock-label" title="${item.key}">${item.key}</span>
+                        <div class="stock-progress-bg">
+                            <div class="stock-progress-fill" style="width: ${item.pct}%; background-color: ${color};"></div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="badge ${badgeClass}">${item.pct.toFixed(1)}%</span>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // Render Pricing Tracking
+        function renderPriceTracking(filteredRows, grouped) {
+            const changeBody = document.getElementById('price-changes-table-body');
+            const compBody = document.getElementById('comp-table-body');
+            
+            changeBody.innerHTML = '';
+            compBody.innerHTML = '';
+
+            // Generate Price Changes List comparing first-half vs second-half ASP
+            let totalChanges = 0;
+            Object.values(grouped).forEach(g => {
+                if (g.firstHalfUnits > 0 && g.secondHalfUnits > 0) {
+                    const firstPrice = g.firstHalfASP;
+                    const lastPrice = g.secondHalfASP;
+                    
+                    if (Math.abs(firstPrice - lastPrice) > 0.01) {
+                        totalChanges++;
+                        const delta = ((lastPrice - firstPrice) / firstPrice) * 100;
+                        const direction = lastPrice > firstPrice ? '▲ Hike' : '▼ Cut';
+                        const badgeClass = lastPrice > firstPrice ? 'badge-red' : 'badge-green';
+                        
+                        changeBody.innerHTML += `
+                            <tr>
+                                <td><strong>${g.key}</strong></td>
+                                <td>${formatINR(firstPrice)}</td>
+                                <td>${formatINR(lastPrice)}</td>
+                                <td><span class="badge ${badgeClass}">${delta > 0 ? '+' : ''}${delta.toFixed(1)}%</span></td>
+                                <td style="color: ${lastPrice > firstPrice ? 'var(--accent-red)' : 'var(--accent-green)'}">${direction}</td>
+                            </tr>`;
+                    }
+                } else if (g.rawRows.length > 1) {
+                    // Fallback to chronological
+                    const firstPrice = g.rawRows[0].Sell_Price;
+                    const lastPrice = g.rawRows[g.rawRows.length - 1].Sell_Price;
+                    if (Math.abs(firstPrice - lastPrice) > 0.01) {
+                        totalChanges++;
+                        const delta = ((lastPrice - firstPrice) / firstPrice) * 100;
+                        const direction = lastPrice > firstPrice ? '▲ Hike' : '▼ Cut';
+                        const badgeClass = lastPrice > firstPrice ? 'badge-red' : 'badge-green';
+                        
+                        changeBody.innerHTML += `
+                            <tr>
+                                <td><strong>${g.key}</strong></td>
+                                <td>${formatINR(firstPrice)}</td>
+                                <td>${formatINR(lastPrice)}</td>
+                                <td><span class="badge ${badgeClass}">${delta > 0 ? '+' : ''}${delta.toFixed(1)}%</span></td>
+                                <td style="color: ${lastPrice > firstPrice ? 'var(--accent-red)' : 'var(--accent-green)'}">${direction}</td>
+                            </tr>`;
+                    }
+                }
+            });
+
+            if (totalChanges === 0) {
+                changeBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">No price changes in this period.</td></tr>`;
+            }
+
+            // Generate Competitive Comparison Table using weighted average sell price vs comp price
+            let totalCompCount = 0;
+            Object.values(grouped).forEach(g => {
+                let sumSellUnits = 0;
+                let sumCompUnits = 0;
+                let weightedSellSum = 0;
+                let weightedCompSum = 0;
+                
+                g.rawRows.forEach(row => {
+                    if (row.Sell_Price !== undefined && !isNaN(row.Sell_Price)) {
+                        weightedSellSum += row.Sell_Price * row.Units_Sold;
+                        sumSellUnits += row.Units_Sold;
+                    }
+                    if (row.Comp_Price !== undefined && !isNaN(row.Comp_Price) && row.Comp_Price > 0) {
+                        weightedCompSum += row.Comp_Price * row.Units_Sold;
+                        sumCompUnits += row.Units_Sold;
+                    }
+                });
+
+                const ourAvgPrice = sumSellUnits > 0 ? (weightedSellSum / sumSellUnits) : 0;
+                const compAvgPrice = sumCompUnits > 0 ? (weightedCompSum / sumCompUnits) : 0;
+
+                if (ourAvgPrice > 0 && compAvgPrice > 0) {
+                    totalCompCount++;
+                    const gap = ((ourAvgPrice - compAvgPrice) / compAvgPrice) * 100;
+                    
+                    let status = "At Par";
+                    let badgeClass = "badge-purple";
+                    
+                    if (gap < -2) {
+                        status = "Cheaper";
+                        badgeClass = "badge-green";
+                    } else if (gap > 2) {
+                        status = "Pricier";
+                        badgeClass = "badge-red";
+                    }
+
+                    compBody.innerHTML += `
+                        <tr>
+                            <td><strong>${g.key}</strong></td>
+                            <td>${formatINR(ourAvgPrice)}</td>
+                            <td>${formatINR(compAvgPrice)}</td>
+                            <td><span class="badge ${badgeClass}">${gap > 0 ? '+' : ''}${gap.toFixed(1)}%</span></td>
+                            <td><span class="badge ${badgeClass}">${status}</span></td>
+                        </tr>`;
+                }
+            });
+
+            if (totalCompCount === 0) {
+                compBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Add a Comp_Price column to enable benchmark analytics.</td></tr>`;
+            }
+        }
+
+        // Render Contributors list (E & F)
+        function renderContributors(grouped) {
+            const topContainer = document.getElementById('top-contributors-container');
+            const bottomContainer = document.getElementById('bottom-contributors-container');
+            
+            topContainer.innerHTML = '';
+            bottomContainer.innerHTML = '';
+
+            const list = Object.values(grouped).sort((a,b) => b.revenue - a.revenue);
+
+            if (list.length === 0) {
+                topContainer.innerHTML = `<div class="empty-state">No contributor statistics available.</div>`;
+                bottomContainer.innerHTML = `<div class="empty-state">No contributor statistics available.</div>`;
+                return;
+            }
+
+            // Top 5
+            const top5 = list.slice(0, 5);
+            top5.forEach((item, index) => {
+                const rank = index + 1;
+                let medalClass = `rank-${rank}`;
+                let medal = rank;
+                if (rank === 1) medal = '🥇';
+                else if (rank === 2) medal = '🥈';
+                else if (rank === 3) medal = '🥉';
+
+                const growthArrow = item.growth >= 0 ? '▲' : '▼';
+                const color = item.growth >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+
+                topContainer.innerHTML += `
+                    <div class="contributor-item">
+                        <div class="contributor-rank-name">
+                            <span class="rank-badge ${medalClass}">${medal}</span>
+                            <span style="font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 200px;">${item.key}</span>
+                        </div>
+                        <div class="contributor-metrics">
+                            <div><strong>${formatINR(item.revenue)}</strong></div>
+                            <div style="font-size: 0.75rem; color: ${color}">${growthArrow} ${item.units} units (${item.growth.toFixed(1)}%)</div>
+                        </div>
+                    </div>`;
+            });
+
+            // Bottom 4 (excluding items with 0 revenue to keep it interesting)
+            const bottom4 = list.filter(item => item.revenue > 0).reverse().slice(0, 4);
+            bottom4.forEach((item) => {
+                const growthArrow = item.growth >= 0 ? '▲' : '▼';
+                const color = item.growth >= 0 ? 'var(--accent-green)' : 'var(--accent-red)';
+
+                bottomContainer.innerHTML += `
+                    <div class="contributor-item">
+                        <div class="contributor-rank-name">
+                            <span style="font-size: 0.9rem; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; max-width: 200px;">${item.key}</span>
+                        </div>
+                        <div class="contributor-metrics">
+                            <div><strong>${formatINR(item.revenue)}</strong></div>
+                            <div style="font-size: 0.75rem; color: ${color}">${growthArrow} ${item.units} units (${item.growth.toFixed(1)}%)</div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // Render Demand tiles grid
+        function renderDemandGrid(grouped) {
+            const container = document.getElementById('demand-tiles-container');
+            container.innerHTML = '';
+
+            const list = Object.values(grouped).map(g => {
+                return {
+                    key: g.key,
+                    score: g.demandCount > 0 ? (g.demandSum / g.demandCount) : 0
+                };
+            }).sort((a,b) => b.score - a.score);
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="empty-state">No demand statistics calculated.</div>`;
+                return;
+            }
+
+            list.forEach(item => {
+                let tier = "Low";
+                let badgeClass = "badge-red";
+                let borderColor = "var(--accent-red)";
+                
+                if (item.score >= 70) {
+                    tier = "High";
+                    badgeClass = "badge-green";
+                    borderColor = "var(--accent-green)";
+                } else if (item.score >= 40) {
+                    tier = "Med";
+                    badgeClass = "badge-amber";
+                    borderColor = "var(--accent-amber)";
+                }
+
+                container.innerHTML += `
+                    <div class="demand-tile" style="border-left: 4px solid ${borderColor};">
+                        <div class="demand-tile-header">
+                            <span class="demand-tile-title" title="${item.key}">${item.key}</span>
+                            <span class="badge ${badgeClass}">${tier}</span>
+                        </div>
+                        <div class="demand-tile-score" style="color: ${borderColor};">
+                            ${item.score.toFixed(1)}
+                        </div>
+                        <div class="demand-tile-footer">
+                            Composite Rank &bull; Conv &bull; Repeat Ratio
+                        </div>
+                    </div>`;
+            });
+        }
+
+        // Render portfolio statistics below filters
+        function renderDataSummary(filteredRows, fullDataset) {
+            const container = document.getElementById('data-summary-bar');
+            if (!container) return;
+
+            if (filteredRows.length === 0) {
+                container.innerHTML = `<div style="text-align: center; width: 100%;">No data matches active filters.</div>`;
+                return;
+            }
+
+            const uniqueEntities = new Set(filteredRows.map(r => r.FSN)).size;
+            const dates = filteredRows.map(r => r.Date).sort();
+            const minDate = dates[0];
+            const maxDate = dates[dates.length - 1];
+            const filterPercentage = ((filteredRows.length / fullDataset.length) * 100).toFixed(1);
+
+            container.innerHTML = `
+                <div class="data-summary-item">
+                    <span>📅 Date Range:</span>
+                    <span class="data-summary-value">${minDate} to ${maxDate} (${selectedPeriod} Days)</span>
+                </div>
+                <div class="data-summary-item">
+                    <span>📊 Filtered Scope:</span>
+                    <span class="data-summary-value">${filteredRows.length.toLocaleString()} of ${fullDataset.length.toLocaleString()} rows (${filterPercentage}%)</span>
+                </div>
+                <div class="data-summary-item">
+                    <span>📦 Unique Portfolio Count:</span>
+                    <span class="data-summary-value">${uniqueEntities} ${drilldownLevel}(s)</span>
+                </div>
+            `;
+        }
+
+        // Render Revenue Share Doughnut Chart
+        function renderRevenueShareChart(grouped) {
+            const canvasEl = document.getElementById('revenueShareChart');
+            if (!canvasEl) return;
+            
+            const parent = canvasEl.parentNode;
+            parent.innerHTML = '<canvas id="revenueShareChart" aria-label="Revenue Share Donut Chart"></canvas>';
+            const ctx = document.getElementById('revenueShareChart').getContext('2d');
+
+            if (revenueShareChartInstance) {
+                revenueShareChartInstance.destroy();
+            }
+
+            const sorted = Object.values(grouped).sort((a,b) => b.revenue - a.revenue);
+            const totalRevenue = sorted.reduce((sum, item) => sum + item.revenue, 0);
+
+            if (sorted.length === 0 || totalRevenue === 0) {
+                showChartEmptyState('revenueShareChart');
+                return;
+            }
+
+            const top5 = sorted.slice(0, 5);
+            const others = sorted.slice(5);
+
+            const labels = top5.map(s => s.key);
+            const data = top5.map(s => s.revenue);
+
+            if (others.length > 0) {
+                const othersRevenue = others.reduce((sum, item) => sum + item.revenue, 0);
+                labels.push("Others");
+                data.push(othersRevenue);
+            }
+
+            const chartColors = [
+                '#4f8ef7', // Accent Blue
+                '#2dd4a0', // Accent Green
+                '#a78bfa', // Accent Purple
+                '#f16b6b', // Accent Red
+                '#f5a623', // Accent Amber
+                '#4b5563'  // Dark Gray
+            ];
+
+            revenueShareChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: chartColors.slice(0, labels.length),
+                        borderColor: '#161b27',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e6edf3',
+                                boxWidth: 12,
+                                padding: 15,
+                                font: { family: 'Outfit', size: 11 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = ((value / totalRevenue) * 100).toFixed(1);
+                                    return ` ${context.label}: ${formatINR(value)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // Show empty chart states
+        function showChartEmptyState(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const parent = canvas.parentNode;
+            parent.innerHTML = `
+                <div class="empty-state">
+                    <span class="empty-state-icon">📊</span>
+                    <span>No data matches your filters</span>
+                </div>`;
+        }
+
+        // Fast CSV parsing function that robustly handles quotes and internal commas
+        function parseCSV(text) {
+            const lines = [];
+            let row = [];
+            let inQuotes = false;
+            let start = 0;
+
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i];
+                if (c === '"') {
+                    inQuotes = !inQuotes;
+                } else if (c === ',' && !inQuotes) {
+                    let val = text.substring(start, i);
+                    if (val.length >= 2 && val.charAt(0) === '"' && val.charAt(val.length - 1) === '"') {
+                        val = val.substring(1, val.length - 1).replace(/""/g, '"');
+                    }
+                    row.push(val);
+                    start = i + 1;
+                } else if ((c === '\r' || c === '\n') && !inQuotes) {
+                    let val = text.substring(start, i);
+                    if (val.length >= 2 && val.charAt(0) === '"' && val.charAt(val.length - 1) === '"') {
+                        val = val.substring(1, val.length - 1).replace(/""/g, '"');
+                    }
+                    row.push(val);
+                    lines.push(row);
+                    row = [];
+                    if (c === '\r' && text[i + 1] === '\n') {
+                        i++;
+                    }
+                    start = i + 1;
+                }
+            }
+            if (start <= text.length) {
+                let val = text.substring(start);
+                if (val.length >= 2 && val.charAt(0) === '"' && val.charAt(val.length - 1) === '"') {
+                    val = val.substring(1, val.length - 1).replace(/""/g, '"');
+                }
+                row.push(val);
+                if (row.length > 1 || row[0] !== "") {
+                    lines.push(row);
+                }
+            }
+            // Filter out trailing empty line if present
+            if (lines.length > 0 && lines[lines.length - 1].length === 1 && lines[lines.length - 1][0] === "") {
+                lines.pop();
+            }
+            return lines;
+        }
+
+        // Auto mapping columns via normalized fuzzy search
+        function mapHeaders(headers) {
+            const normalized = headers.map(h => h.trim().toLowerCase().replace(/[\s_]/g, ''));
+            const map = {};
+
+            const targetColumns = [
+                'Date', 'FSN', 'Product_Name', 'Brand', 'Category', 'Subcategory',
+                'Units_Sold', 'Revenue', 'Sell_Price', 'Comp_Price', 'Instock_Pct',
+                'Demand_Score', 'Search_Rank', 'Conversion_Rate', 'Repeat_Orders'
+            ];
+
+            const aliases = {
+                date: ['date', 'transactiondate', 'datestr'],
+                fsn: ['fsn', 'productid', 'sku', 'itemid'],
+                product_name: ['productname', 'title', 'name', 'itemname'],
+                brand: ['brand', 'brandname', 'manufacturer'],
+                category: ['category', 'toplevelcategory'],
+                subcategory: ['subcategory', 'midlevelcategory'],
+                units_sold: ['unitssold', 'units', 'qty', 'quantity', 'salesvolume'],
+                revenue: ['revenue', 'totalrevenue', 'sales', 'turnover'],
+                sell_price: ['sellprice', 'sellingprice', 'price', 'ourprice'],
+                comp_price: ['compprice', 'competitorprice', 'benchmarkprice'],
+                instock_pct: ['instockpct', 'stockavailability', 'instock', 'availability'],
+                demand_score: ['demandscore', 'demandindex', 'popularityscore'],
+                search_rank: ['searchrank', 'position', 'rank'],
+                conversion_rate: ['conversionrate', 'convrate', 'conversionpct'],
+                repeat_orders: ['repeatorders', 'reordercount', 'repeats']
+            };
+
+            targetColumns.forEach(col => {
+                const targetKey = col.toLowerCase().replace(/[\s_]/g, '');
+                // Check if target matches exactly or matches any aliases
+                let mappedIdx = -1;
+                for (let i = 0; i < normalized.length; i++) {
+                    if (normalized[i] === targetKey || (aliases[col.toLowerCase()] && aliases[col.toLowerCase()].includes(normalized[i]))) {
+                        mappedIdx = i;
+                        break;
+                    }
+                }
+                map[col] = mappedIdx;
+            });
+
+            return map;
+        }
+
+        // Synchronize with Google Sheets Link
+        async function syncGoogleSheets() {
+            const urlInput = document.getElementById('sheet-url').value;
+            const tabName = document.getElementById('tab-name').value || 'RawData';
+            const alertBox = document.getElementById('error-alert');
+            
+            alertBox.style.display = 'none';
+
+            if (!urlInput) {
+                showError("Please enter a valid Google Sheets URL.");
+                return;
+            }
+
+            let sheetId = "";
+            const matches = urlInput.match(/\/d\/([a-zA-Z0-9_-]+)/);
+            if (matches) {
+                sheetId = matches[1];
+            } else {
+                showError("Invalid Google Sheet URL format. Make sure it contains '/d/SPREADSHEET_ID'.");
+                return;
+            }
+
+            const syncDot = document.getElementById('sync-dot');
+            const syncText = document.getElementById('sync-text');
+            
+            syncDot.className = "status-dot status-stale";
+            syncText.innerText = "Syncing with Sheets...";
+
+            // Build correct export URL
+            const csvFetchUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${tabName}`;
+
+            // Check if we can route through our local automation server
+            let fetchUrl = csvFetchUrl;
+            const isLocalServer = window.location.protocol.startsWith('http');
+            
+            if (isLocalServer) {
+                fetchUrl = `/proxy-sync?url=${encodeURIComponent(csvFetchUrl)}&tab=${encodeURIComponent(tabName)}`;
+            } else {
+                // If loaded via file://, attempt to hit the local server anyway if it is running
+                // This allows seamless syncing even when double-clicking index.html directly!
+                fetchUrl = `http://localhost:8000/proxy-sync?url=${encodeURIComponent(csvFetchUrl)}&tab=${encodeURIComponent(tabName)}`;
+            }
+
+            try {
+                const response = await fetch(fetchUrl);
+                if (!response.ok) {
+                    // If hitting localhost failed and we were in file://, fallback to trying direct fetch
+                    if (!isLocalServer) {
+                        console.log("Local automation server not reached. Trying direct fetch (subject to CORS)...");
+                        const fallbackResponse = await fetch(csvFetchUrl);
+                        if (!fallbackResponse.ok) throw new Error("CORS Direct Fetch Failed");
+                        const csvText = await fallbackResponse.text();
+                        processCSVText(csvText);
+                        // Set green
+                        syncDot.className = "status-dot status-synced";
+                        syncText.innerText = "Synced with Google Sheets (Direct)";
+                        document.getElementById('last-sync-time').innerText = new Date().toLocaleTimeString();
+                        dataSourceInfo = { type: 'sheets', meta: { url: urlInput } };
+                        setDataSourceLink('sheets', dataSourceInfo.meta);
+                        return;
+                    }
+                    throw new Error(`Failed to fetch sheet data. Status: ${response.status}`);
+                }
+                
+                const csvText = await response.text();
+                processCSVText(csvText);
+                
+                // Set green
+                syncDot.className = "status-dot status-synced";
+                syncText.innerText = "Synced & Saved Locally";
+                document.getElementById('last-sync-time').innerText = new Date().toLocaleTimeString();
+                dataSourceInfo = { type: 'sheets', meta: { url: urlInput } };
+                setDataSourceLink('sheets', dataSourceInfo.meta);
+            } catch (err) {
+                console.error(err);
+                syncDot.className = "status-dot status-error";
+                syncText.innerText = "Sync Failed";
+                showError(`CORS Fetch failed. To automate this and sync seamlessly without public publishing or CORS restrictions:
+1. Open your terminal in the workspace directory.
+2. Run 'python server.py' or double click 'run_dashboard.bat'.
+3. Open 'http://localhost:8000' in your browser and try again!`);
+            }
+        }
+
+        // Update the data-source link in the header badge
+        function setDataSourceLink(type, meta) {
+            const linkEl = document.getElementById('data-source-link');
+            // Revoke any previous blob URL to avoid memory leaks
+            if (csvBlobUrl) {
+                URL.revokeObjectURL(csvBlobUrl);
+                csvBlobUrl = null;
+            }
+
+            if (type === 'sheets') {
+                linkEl.textContent = '↗ Open Google Sheet';
+                linkEl.href = meta.url;
+                linkEl.target = '_blank';
+                linkEl.removeAttribute('download');
+                linkEl.style.display = 'block';
+            } else if (type === 'csv') {
+                // Build a blob URL so the user can re-download the uploaded file
+                const blob = new Blob([meta.content], { type: 'text/csv' });
+                csvBlobUrl = URL.createObjectURL(blob);
+                linkEl.textContent = `⬇ Download ${meta.name || 'data.csv'}`;
+                linkEl.href = csvBlobUrl;
+                linkEl.setAttribute('download', meta.name || 'data.csv');
+                linkEl.removeAttribute('target');
+                linkEl.style.display = 'block';
+            } else {
+                linkEl.style.display = 'none';
+                linkEl.href = '#';
+                linkEl.textContent = '';
+            }
+        }
+
+        // Handle Local Upload of the generated CSV file
+        function handleLocalCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const csvText = e.target.result;
+                try {
+                    processCSVText(csvText);
+                    
+                    const syncDot = document.getElementById('sync-dot');
+                    const syncText = document.getElementById('sync-text');
+                    syncDot.className = "status-dot status-synced";
+                    syncText.innerText = `Loaded: ${file.name}`;
+                    document.getElementById('last-sync-time').innerText = new Date().toLocaleTimeString();
+
+                    // Set download link for the uploaded CSV
+                    dataSourceInfo = { type: 'csv', meta: { name: file.name, content: csvText } };
+                    setDataSourceLink('csv', dataSourceInfo.meta);
+                } catch (err) {
+                    showError(`CSV Processing failed: ${err.message}`);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Core parsing and schema mapping
+        function processCSVText(csvText) {
+            try {
+                localStorage.setItem('firstclub_uploaded_csv', csvText);
+                localStorage.setItem('firstclub_uploaded_csv_time', new Date().toLocaleTimeString());
+            } catch (storageErr) {
+                console.warn("Could not save CSV to localStorage:", storageErr);
+            }
+
+            const parsedLines = parseCSV(csvText);
+            if (parsedLines.length < 2) {
+                throw new Error("CSV does not contain enough records.");
+            }
+
+            const headers = parsedLines[0];
+            const headerMap = mapHeaders(headers);
+
+            // Verify essential fields
+            if (headerMap['Date'] === -1 || headerMap['FSN'] === -1) {
+                throw new Error("Missing critical columns: 'Date' or 'FSN'. Check headers.");
+            }
+
+            const newDataset = [];
+            for (let i = 1; i < parsedLines.length; i++) {
+                const row = parsedLines[i];
+                if (row.length < headers.length) continue; // Skip malformed rows
+                
+                const record = {};
+                
+                // Extract value helper
+                const getVal = (colName, isFloat = false) => {
+                    const idx = headerMap[colName];
+                    if (idx === -1 || idx === undefined || row[idx] === undefined) return isFloat ? 0 : "";
+                    const val = row[idx].trim();
+                    return isFloat ? (parseFloat(val) || 0) : val;
+                };
+
+                record.Date = getVal('Date');
+                record.FSN = getVal('FSN');
+                record.Product_Name = getVal('Product_Name') || `Product ${record.FSN}`;
+                record.Brand = getVal('Brand') || "Generic";
+                record.Category = getVal('Category') || "General";
+                record.Subcategory = getVal('Subcategory') || "Misc";
+                record.Units_Sold = parseInt(getVal('Units_Sold', true)) || 0;
+                record.Revenue = getVal('Revenue', true);
+                record.Sell_Price = getVal('Sell_Price', true);
+                record.Comp_Price = getVal('Comp_Price', true);
+                record.Instock_Pct = getVal('Instock_Pct', true);
+                record.Demand_Score = getVal('Demand_Score', true);
+                record.Search_Rank = parseInt(getVal('Search_Rank', true)) || 100;
+                record.Conversion_Rate = getVal('Conversion_Rate', true);
+                record.Repeat_Orders = parseInt(getVal('Repeat_Orders', true)) || 0;
+
+                newDataset.push(record);
+            }
+
+            // Sort dataset chronologically once globally
+            dataset = newDataset.sort((a, b) => a.Date > b.Date ? 1 : (a.Date < b.Date ? -1 : 0));
+            initializeDropdowns();
+            processDataAndRender();
+        }
+
+        function showError(msg) {
+            const alertBox = document.getElementById('error-alert');
+            alertBox.style.display = 'block';
+            alertBox.innerHTML = `<strong>Synchronization Error:</strong> ${msg}`;
+        }
+
+        function initializeSyncState() {
+            document.getElementById('last-sync-time').innerText = new Date().toLocaleTimeString();
+        }
+
+        // Export current filtered view as CSV
+        function exportFilteredCSV() {
+            const sortedDates = Array.from(new Set(dataset.map(r => r.Date))).sort();
+            if (sortedDates.length === 0) return;
+
+            const latestDate = new Date(sortedDates[sortedDates.length - 1]);
+            const cutoffDate = new Date(latestDate);
+            cutoffDate.setDate(latestDate.getDate() - selectedPeriod + 1);
+
+            const filteredRows = dataset.filter(r => {
+                const dDate = new Date(r.Date);
+                if (dDate < cutoffDate) return false;
+                if (activeBrand !== 'ALL' && r.Brand !== activeBrand) return false;
+                if (activeCategory !== 'ALL' && r.Category !== activeCategory) return false;
+                if (activeSubcategory !== 'ALL' && r.Subcategory !== activeSubcategory) return false;
+                return true;
+            });
+
+            if (filteredRows.length === 0) {
+                alert("No filtered data to export!");
+                return;
+            }
+
+            const headers = [
+                "Date", "FSN", "Product_Name", "Brand", "Category", "Subcategory",
+                "Units_Sold", "Revenue", "Sell_Price", "Comp_Price", "Instock_Pct",
+                "Demand_Score", "Search_Rank", "Conversion_Rate", "Repeat_Orders"
+            ];
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += headers.join(",") + "\n";
+
+            filteredRows.forEach(r => {
+                const row = [
+                    r.Date,
+                    r.FSN,
+                    `"${r.Product_Name.replace(/"/g, '""')}"`,
+                    r.Brand,
+                    r.Category,
+                    r.Subcategory,
+                    r.Units_Sold,
+                    r.Revenue,
+                    r.Sell_Price,
+                    r.Comp_Price,
+                    r.Instock_Pct,
+                    r.Demand_Score,
+                    r.Search_Rank,
+                    r.Conversion_Rate,
+                    r.Repeat_Orders
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `firstclub_dashboard_export_${drilldownLevel.toLowerCase()}_${selectedPeriod}d.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

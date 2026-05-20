@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Category Intelligence — Product Sales Anomalies Report</title>
+    
+    <!-- Outfit Font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Modern Premium Dark Analytics Design System */
+        :root {
+            --bg-primary: #0d1117;
+            --bg-surface: #161b27;
+            --border: #2a3350;
+            --accent-blue: #4f8ef7;
+            --accent-green: #2dd4a0;
+            --accent-red: #f16b6b;
+            --accent-amber: #f5a623;
+            --accent-purple: #a78bfa;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --focus-ring: 2px solid var(--accent-blue);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-weight: 400;
+            padding: 24px;
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* Typography Weights Constraint: Only 400 and 500 */
+        h1, h2, h3, h4, th, .btn, .tab-btn, .metric-value {
+            font-weight: 500;
+        }
+        
+        span, p, td, input, select {
+            font-weight: 400;
+        }
+
+        /* Header Bar styling */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .brand-logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .fk-logo {
+            color: #ffffff;
+            background: linear-gradient(135deg, #4f8ef7 0%, #a78bfa 100%);
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 15px rgba(79, 142, 247, 0.25);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+        }
+
+        .dashboard-title {
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        .navigation-link {
+            font-size: 0.88rem;
+            color: var(--accent-blue);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+
+        .navigation-link:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        /* Status Indicator */
+        .status-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+            font-size: 0.85rem;
+            background-color: rgba(255, 255, 255, 0.02);
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            min-width: 220px;
+        }
+
+        .status-badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            justify-content: flex-end;
+        }
+
+        .refresh-at-label {
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            white-space: nowrap;
+        }
+
+        .refresh-at-label span {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-synced { background-color: var(--accent-green); }
+        .status-stale { background-color: var(--accent-amber); }
+        .status-error { background-color: var(--accent-red); }
+
+        #error-alert {
+            background-color: rgba(241, 107, 107, 0.1);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        /* Sync Controls Row */
+        .sync-row {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .input-group.small-input {
+            flex: 0 0 120px;
+            min-width: 120px;
+        }
+
+        .input-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input[type="text"], select {
+            background-color: #0d1117;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            outline: none;
+            width: 100%;
+        }
+
+        input[type="text"]:focus, select:focus {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 1px var(--accent-blue);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-align: center;
+            transition: opacity 0.2s ease;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 18px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: #0d1117;
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border-color: var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        /* KPI Grid Styling */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .kpi-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 96px;
+            transition: border-color 0.2s;
+        }
+
+        .kpi-card:hover {
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        .kpi-label {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .kpi-value {
+            font-size: 1.4rem;
+            color: var(--text-primary);
+            line-height: 1.2;
+        }
+
+        .kpi-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        /* Severity Legend Panel */
+        .legend-panel {
+            background: linear-gradient(135deg, rgba(22, 27, 39, 0.6) 0%, rgba(13, 17, 23, 0.8) 100%);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .legend-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--accent-amber);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .legend-item {
+            background-color: rgba(255,255,255,0.01);
+            border: 1px solid rgba(255,255,255,0.02);
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .legend-badge {
+            font-size: 0.72rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 6px;
+        }
+
+        .legend-desc {
+            font-size: 0.76rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* Filter Controls */
+        .filter-row {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 160px;
+        }
+
+        .filter-group.large-group {
+            flex: 2;
+            min-width: 240px;
+        }
+
+        .filter-group.action-group {
+            flex: 0 0 auto;
+            min-width: auto;
+        }
+
+        /* Table custom styling */
+        .panel {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 24px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            color: var(--text-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            width: 100%;
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        th {
+            color: var(--text-secondary);
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+        }
+
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        /* Badges & Glowing indicators */
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            text-align: center;
+            min-width: 110px;
+        }
+
+        .badge-crit-spike {
+            background-color: rgba(241, 107, 107, 0.15);
+            color: #ff5c5c;
+            border: 1px solid rgba(241, 107, 107, 0.3);
+            box-shadow: 0 0 10px rgba(241, 107, 107, 0.15);
+        }
+
+        .badge-spike {
+            background-color: rgba(45, 212, 160, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(45, 212, 160, 0.3);
+            box-shadow: 0 0 10px rgba(45, 212, 160, 0.1);
+        }
+
+        .badge-drop {
+            background-color: rgba(245, 166, 35, 0.15);
+            color: var(--accent-amber);
+            border: 1px solid rgba(245, 166, 35, 0.3);
+        }
+
+        .badge-crit-drop {
+            background-color: rgba(167, 139, 250, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(167, 139, 250, 0.3);
+            box-shadow: 0 0 10px rgba(167, 139, 250, 0.15);
+        }
+
+        .delta-up { color: var(--accent-green); font-weight: 500; }
+        .delta-down { color: var(--accent-red); font-weight: 500; }
+
+        @media (max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .legend-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .legend-grid {
+                grid-template-columns: 1fr;
+            }
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. HEADER BAR -->
+    <header>
+        <div class="brand-logo-container">
+            <a href="index.html" class="fk-logo">FK FirstClub</a>
+            <div>
+                <h1 class="dashboard-title">Product Sales Anomalies Engine</h1>
+                <a href="index.html" class="navigation-link">← Return to Category Intelligence Dashboard</a>
+            </div>
+        </div>
+        
+        <div class="status-container">
+            <div class="status-badge-row">
+                <span class="status-dot status-synced" id="sync-dot"></span>
+                <span id="sync-text" style="font-weight: 500;">Embedded Fallback Active</span>
+            </div>
+            <div class="refresh-at-label">
+                Last Evaluated: <span id="last-sync-time">00:00:00 AM</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. SYNCHRONIZATION BAR -->
+    <div id="error-alert"></div>
+    
+
+
+    <!-- 3. KPI DASHBOARD ROW -->
+    <section class="kpi-grid" aria-label="High-Level Anomaly Summary">
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-blue);">
+            <div>
+                <span class="kpi-label">Checked Products</span>
+                <div class="kpi-value" id="kpi-total-checked">0</div>
+            </div>
+            <span class="kpi-subtitle">Unique FSNs in baseline</span>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-amber);">
+            <div>
+                <span class="kpi-label">Active Anomalies</span>
+                <div class="kpi-value" id="kpi-anomalies">0</div>
+            </div>
+            <span class="kpi-subtitle" id="kpi-anomalies-pct">0% of product catalog</span>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-green);">
+            <div>
+                <span class="kpi-label">Volume Spikes</span>
+                <div class="kpi-value" style="color: var(--accent-green);" id="kpi-spikes">0</div>
+            </div>
+            <span class="kpi-subtitle" id="kpi-spikes-sub">0 Critical Spikes</span>
+        </div>
+        <div class="kpi-card" style="border-left: 3px solid var(--accent-red);">
+            <div>
+                <span class="kpi-label">Volume Drops</span>
+                <div class="kpi-value" style="color: var(--accent-red);" id="kpi-drops">0</div>
+            </div>
+            <span class="kpi-subtitle" id="kpi-drops-sub">0 Critical Drops</span>
+        </div>
+    </section>
+
+    <!-- 4. SEVERITY TIERS & BUSINESS RULES PANEL -->
+    <section class="legend-panel" aria-label="Anomaly Severity Legend">
+        <h2 class="legend-title">⚡ Anomaly Thresholds & Business Classification Rules</h2>
+        <div class="legend-grid">
+            <div class="legend-item">
+                <span class="legend-badge badge-crit-spike">⚡ Critical Spike</span>
+                <p class="legend-desc">Revenue Spike is <strong>&ge; 200%</strong>. Minimum 10 units sold on the latest day to avoid low-volume false triggers.</p>
+            </div>
+            <div class="legend-item">
+                <span class="legend-badge badge-spike">▲ Volumetric Spike</span>
+                <p class="legend-desc">Revenue Spike is <strong>&ge; 80%</strong>. Minimum 5 units sold on the latest day. Indicates strong momentum.</p>
+            </div>
+            <div class="legend-item">
+                <span class="legend-badge badge-drop">▼ Volumetric Drop</span>
+                <p class="legend-desc">Revenue Spike is <strong>&le; -55%</strong>. Trailing average units sold must be &ge; 2.0. Catches sudden momentum slow-downs.</p>
+            </div>
+            <div class="legend-item">
+                <span class="legend-badge badge-crit-drop">🚨 Critical Drop</span>
+                <p class="legend-desc">Revenue Spike is <strong>&le; -85%</strong> with trailing average units sold &ge; 4.0, or latest day units sold dropped to <strong>0 units</strong> from a baseline average &ge; 3.0. High stockout/outage risk.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. FILTER CONTROLS ROW -->
+    <section class="filter-row" aria-label="Report Filters and Controls">
+        <div class="filter-group large-group">
+            <label class="input-label" for="anomaly-search">Fuzzy Search Catalog</label>
+            <input type="text" id="anomaly-search" placeholder="Search FSN, Product Name, Brand, Category..." oninput="applyFilters()">
+        </div>
+        <div class="filter-group">
+            <label class="input-label" for="severity-filter">Anomaly Class / Severity</label>
+            <select id="severity-filter" onchange="applyFilters()">
+                <option value="ALL">All Anomalies (Spikes & Drops)</option>
+                <option value="CRIT_SPIKE">⚡ Critical Spikes</option>
+                <option value="SPIKE">▲ Volumetric Spikes</option>
+                <option value="DROP">▼ Volumetric Drops</option>
+                <option value="CRIT_DROP">🚨 Critical Drops</option>
+                <option value="ALL_SPIKES">All Spikes</option>
+                <option value="ALL_DROPS">All Drops</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="input-label" for="brand-filter">Brand Filter</label>
+            <select id="brand-filter" onchange="applyFilters()">
+                <option value="ALL">All Brands</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label class="input-label" for="cat-filter">Category Filter</label>
+            <select id="cat-filter" onchange="applyFilters()">
+                <option value="ALL">All Categories</option>
+            </select>
+        </div>
+        <div class="filter-group action-group">
+            <button class="btn btn-secondary" onclick="exportAnomalyCSV()" style="height: 38px; padding: 0 20px; font-weight: 500;">Export Report CSV</button>
+        </div>
+    </section>
+
+    <!-- 6. ANALYSES TABLE PANEL -->
+    <section class="panel" aria-label="Anomaly Analysis Results Table">
+        <div class="panel-header">
+            <h2 class="panel-title" id="table-title">Product Anomaly Tracking Table</h2>
+            <div id="results-count" style="font-size: 0.8rem; color: var(--text-secondary);">Showing 0 of 0 active triggers</div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product ID (FSN)</th>
+                        <th>Product Name</th>
+                        <th>Brand</th>
+                        <th>Category</th>
+                        <th style="text-align: right;">Spiked Revenue (D-1)</th>
+                        <th style="text-align: right;">Baseline Revenue Avg (D-2 to D-8)</th>
+                        <th style="text-align: right;">Revenue Spike (%)</th>
+                        <th style="text-align: center;">Severity Trigger</th>
+                    </tr>
+                </thead>
+                <tbody id="anomaly-table-body">
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 48px;">
+                            Evaluating system baseline... Please wait.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- CORE LOGIC: JS ENGINE -->
+    <script>
+        // Fallback realistic representative dataset compiled dynamically
+        const DEMO_DATA = /* DEMO_DATA_PLACEHOLDER */;
+
+        // Primary variables
+        let dataset = [...DEMO_DATA];
+        let processedAnomalies = [];
+        let uniqueBrands = [];
+        let uniqueCategories = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeSyncState();
+            
+            // Check if there is uploaded data from the home page
+            const localCSV = localStorage.getItem('firstclub_uploaded_csv');
+            if (localCSV) {
+                try {
+                    processCSVText(localCSV);
+                    document.getElementById('sync-dot').className = "status-dot status-synced";
+                    document.getElementById('sync-text').innerText = "Synced with Home Page";
+                    const syncTime = localStorage.getItem('firstclub_uploaded_csv_time') || new Date().toLocaleTimeString();
+                    document.getElementById('last-sync-time').innerText = syncTime;
+                    return;
+                } catch (e) {
+                    console.error("Failed to process synced CSV from localStorage:", e);
+                }
+            }
+
+            // Fallback: Try fetching the live CSV from the server on load
+            fetch('raw_transaction_data.csv')
+                .then(res => {
+                    if (res.ok) return res.text();
+                    throw new Error("Local transaction CSV not found. Loading embedded slice.");
+                })
+                .then(csvText => {
+                    processCSVText(csvText);
+                    document.getElementById('sync-dot').className = "status-dot status-synced";
+                    document.getElementById('sync-text').innerText = "Live Server Sync Active";
+                })
+                .catch(err => {
+                    console.log(err.message);
+                    processDataset(DEMO_DATA);
+                });
+        });
+
+        function initializeSyncState() {
+            document.getElementById('last-sync-time').innerText = new Date().toLocaleTimeString();
+        }
+
+        // Fast pure JS CSV parsing implementation
+        function parseCSV(text) {
+            const lines = [];
+            let row = [];
+            let inQuotes = false;
+            let start = 0;
+
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i];
+                if (c === '"') {
+                    inQuotes = !inQuotes;
+                } else if (c === ',' && !inQuotes) {
+                    let cell = text.substring(start, i).trim();
+                    if (cell.startsWith('"') && cell.endsWith('"')) {
+                        cell = cell.substring(1, cell.length - 1).replace(/""/g, '"');
+                    }
+                    row.push(cell);
+                    start = i + 1;
+                } else if ((c === '\r' || c === '\n') && !inQuotes) {
+                    let cell = text.substring(start, i).trim();
+                    if (cell.startsWith('"') && cell.endsWith('"')) {
+                        cell = cell.substring(1, cell.length - 1).replace(/""/g, '"');
+                    }
+                    row.push(cell);
+                    if (row.length > 0 && row.some(x => x !== "")) {
+                        lines.push(row);
+                    }
+                    row = [];
+                    if (c === '\r' && text[i + 1] === '\n') i++;
+                    start = i + 1;
+                }
+            }
+            if (start < text.length) {
+                let cell = text.substring(start).trim();
+                if (cell.startsWith('"') && cell.endsWith('"')) {
+                    cell = cell.substring(1, cell.length - 1).replace(/""/g, '"');
+                }
+                row.push(cell);
+                if (row.length > 0 && row.some(x => x !== "")) {
+                    lines.push(row);
+                }
+            }
+            return lines;
+        }
+
+        function mapHeaders(headers) {
+            const map = {};
+            const clean = str => str.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const aliases = {
+                'Date': ['date', 'transactiondate', 'datestr'],
+                'FSN': ['fsn', 'productid', 'sku', 'productserials'],
+                'Product_Name': ['productname', 'name', 'title'],
+                'Brand': ['brand', 'manufacturer', 'company'],
+                'Category': ['category', 'cat', 'department'],
+                'Subcategory': ['subcategory', 'subcat', 'segment'],
+                'Units_Sold': ['unitssold', 'units', 'qty', 'quantity', 'salesvolume'],
+                'Revenue': ['revenue', 'totalrevenue', 'sales', 'turnover'],
+                'Sell_Price': ['sellprice', 'price', 'sellingprice', 'inrprice'],
+                'Comp_Price': ['compprice', 'competitorprice', 'benchmarkprice'],
+                'Instock_Pct': ['instockpct', 'stockpct', 'instock', 'availability'],
+                'Demand_Score': ['demandscore', 'demand'],
+                'Search_Rank': ['searchrank', 'rank'],
+                'Conversion_Rate': ['conversionrate', 'convrate', 'cr'],
+                'Repeat_Orders': ['repeatorders', 'repeats']
+            };
+
+            Object.keys(aliases).forEach(key => {
+                map[key] = -1;
+                for (let i = 0; i < headers.length; i++) {
+                    const normHeader = clean(headers[i]);
+                    if (aliases[key].some(alias => clean(alias) === normHeader)) {
+                        map[key] = i;
+                        break;
+                    }
+                }
+            });
+            return map;
+        }
+
+        function processCSVText(csvText) {
+            try {
+                const parsed = parseCSV(csvText);
+                if (parsed.length < 2) throw new Error("CSV contains insufficient rows.");
+                
+                const headerMap = mapHeaders(parsed[0]);
+                if (headerMap['Date'] === -1 || headerMap['FSN'] === -1) {
+                    throw new Error("Missing critical columns 'Date' or 'FSN'.");
+                }
+
+                const newDataset = [];
+                for (let i = 1; i < parsed.length; i++) {
+                    const row = parsed[i];
+                    if (row.length < parsed[0].length) continue;
+                    
+                    const record = {};
+                    const getVal = (col, isFloat = false) => {
+                        const idx = headerMap[col];
+                        if (idx === -1 || idx === undefined || row[idx] === undefined) return isFloat ? 0 : "";
+                        const val = row[idx].trim();
+                        return isFloat ? (parseFloat(val) || 0) : val;
+                    };
+
+                    record.Date = getVal('Date');
+                    record.FSN = getVal('FSN');
+                    record.Product_Name = getVal('Product_Name') || `Product ${record.FSN}`;
+                    record.Brand = getVal('Brand') || "Generic";
+                    record.Category = getVal('Category') || "General";
+                    record.Subcategory = getVal('Subcategory') || "Misc";
+                    record.Units_Sold = parseInt(getVal('Units_Sold', true)) || 0;
+                    record.Revenue = getVal('Revenue', true);
+                    record.Sell_Price = getVal('Sell_Price', true);
+                    record.Comp_Price = getVal('Comp_Price', true);
+                    record.Instock_Pct = getVal('Instock_Pct', true);
+                    record.Demand_Score = getVal('Demand_Score', true);
+                    record.Search_Rank = parseInt(getVal('Search_Rank', true)) || 100;
+                    record.Conversion_Rate = getVal('Conversion_Rate', true);
+                    record.Repeat_Orders = parseInt(getVal('Repeat_Orders', true)) || 0;
+
+                    newDataset.push(record);
+                }
+                
+                processDataset(newDataset);
+            } catch (err) {
+                showError(`Failed to process CSV: ${err.message}`);
+            }
+        }
+
+        function handleLocalCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                processCSVText(e.target.result);
+                document.getElementById('sync-dot').className = "status-dot status-synced";
+                document.getElementById('sync-text').innerText = `Local Upload: ${file.name}`;
+                document.getElementById('last-sync-time').innerText = new Date().toLocaleTimeString();
+            };
+            reader.readAsText(file);
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error-alert');
+            el.style.display = 'block';
+            el.innerHTML = `<strong>Data Issue:</strong> ${msg}`;
+        }
+
+        function processDataset(newDataset) {
+            dataset = newDataset;
+            if (dataset.length === 0) return;
+
+            // Sort globally once chronologically
+            dataset.sort((a, b) => a.Date > b.Date ? 1 : (a.Date < b.Date ? -1 : 0));
+            
+            // Extract unique dates in order
+            const uniqueDates = Array.from(new Set(dataset.map(r => r.Date))).sort();
+            if (uniqueDates.length < 8) {
+                showError("The dataset must cover at least 8 distinct dates to evaluate 7-day baselines.");
+                return;
+            }
+
+            // Group transactions by product (FSN) and build date lookup
+            const productLookup = {};
+            const allProducts = {};
+            const brandsSet = new Set();
+            const categoriesSet = new Set();
+
+            dataset.forEach(row => {
+                const fsn = row.FSN;
+                if (!productLookup[fsn]) {
+                    productLookup[fsn] = {};
+                }
+                if (!productLookup[fsn][row.Date]) {
+                    productLookup[fsn][row.Date] = { units: 0, revenue: 0 };
+                }
+                productLookup[fsn][row.Date].units += row.Units_Sold;
+                productLookup[fsn][row.Date].revenue += row.Revenue;
+
+                if (!allProducts[fsn]) {
+                    allProducts[fsn] = {
+                        fsn: fsn,
+                        name: row.Product_Name,
+                        brand: row.Brand,
+                        category: row.Category
+                    };
+                }
+                brandsSet.add(row.Brand);
+                categoriesSet.add(row.Category);
+            });
+            // Only analyze the latest date in the dataset compared to its trailing 7 days
+            const targetDateIndex = uniqueDates.length - 1;
+            const targetDate = uniqueDates[targetDateIndex];
+            const baselineDates = uniqueDates.slice(targetDateIndex - 7, targetDateIndex);
+
+            document.getElementById('table-title').innerText = `Product Anomaly Tracking Table (Evaluation Date: ${targetDate})`;
+
+            // Compute metrics and search for anomalies for each date
+            processedAnomalies = [];
+            let totalCheckedProducts = Object.keys(allProducts).length;
+            document.getElementById('kpi-total-checked').innerText = totalCheckedProducts.toLocaleString();
+
+            let totalAnomalies = 0;
+            let criticalSpikes = 0;
+            let normalSpikes = 0;
+            let normalDrops = 0;
+            let criticalDrops = 0;
+
+            Object.keys(allProducts).forEach(fsn => {
+                const p = allProducts[fsn];
+                
+                // Get D-1 (target date) sales units and revenue
+                const latestData = productLookup[fsn][targetDate] || { units: 0, revenue: 0 };
+                const latestSales = latestData.units;
+                const latestRevenue = latestData.revenue;
+
+                // Trailing 7D sum of sales and revenue
+                let baselineSalesSum = 0;
+                let baselineRevenueSum = 0;
+                baselineDates.forEach(d => {
+                    const dataAtDate = productLookup[fsn][d] || { units: 0, revenue: 0 };
+                    baselineSalesSum += dataAtDate.units;
+                    baselineRevenueSum += dataAtDate.revenue;
+                });
+                const baselineSalesAvg = baselineSalesSum / 7;
+                const baselineRevenueAvg = baselineRevenueSum / 7;
+
+                // Anomaly Detection Algorithm using the Revenue Spike (%) Formula:
+                // Revenue Spike (%) = ((Spiked Revenue - Baseline Revenue) / Baseline Revenue) * 100
+                let severity = null; // 'CRIT_SPIKE', 'SPIKE', 'DROP', 'CRIT_DROP'
+                let deviation = 0; // This stores the Revenue Spike (%)
+
+                if (baselineRevenueAvg > 0) {
+                    deviation = ((latestRevenue - baselineRevenueAvg) / baselineRevenueAvg) * 100;
+                } else if (latestRevenue > 0) {
+                    deviation = 100; // 100% growth fallback from zero baseline
+                }
+
+                // Rule Evaluator based on Revenue Spike (%) and units sold thresholds:
+                // 1. Critical Drops
+                if (latestSales === 0 && baselineSalesAvg >= 3.0) {
+                    severity = 'CRIT_DROP';
+                } else if (deviation <= -85.0 && baselineSalesAvg >= 4.0) {
+                    severity = 'CRIT_DROP';
+                }
+                // 2. Volumetric Drops
+                else if (deviation <= -55.0 && baselineSalesAvg >= 2.0) {
+                    severity = 'DROP';
+                }
+                // 3. Critical Spikes
+                else if (deviation >= 200.0 && latestSales >= 10) {
+                    severity = 'CRIT_SPIKE';
+                } else if (baselineRevenueAvg === 0 && latestSales >= 10) {
+                    severity = 'CRIT_SPIKE';
+                }
+                // 4. Volumetric Spikes
+                else if (deviation >= 80.0 && latestSales >= 5) {
+                    severity = 'SPIKE';
+                } else if (baselineRevenueAvg === 0 && latestSales >= 5) {
+                    severity = 'SPIKE';
+                }
+
+                if (severity) {
+                    totalAnomalies++;
+                    if (severity === 'CRIT_SPIKE') criticalSpikes++;
+                    else if (severity === 'SPIKE') normalSpikes++;
+                    else if (severity === 'DROP') normalDrops++;
+                    else if (severity === 'CRIT_DROP') criticalDrops++;
+
+                    processedAnomalies.push({
+                        date: targetDate,
+                        fsn: p.fsn,
+                        name: p.name,
+                        brand: p.brand,
+                        category: p.category,
+                        latestSales: latestSales,
+                        latestRevenue: latestRevenue,
+                        baselineRevenueAvg: baselineRevenueAvg,
+                        deviation: deviation, // Revenue Spike (%)
+                        severity: severity
+                    });
+                }
+            });
+
+            // Update KPI cards
+            document.getElementById('kpi-anomalies').innerText = totalAnomalies.toLocaleString();
+            const totalEvaluations = totalCheckedProducts;
+            const anomaliesPct = totalEvaluations > 0 ? ((totalAnomalies / totalEvaluations) * 100).toFixed(1) : 0;
+            document.getElementById('kpi-anomalies-pct').innerText = `${anomaliesPct}% of total evaluations`;
+
+            document.getElementById('kpi-spikes').innerText = (criticalSpikes + normalSpikes).toLocaleString();
+            document.getElementById('kpi-spikes-sub').innerText = `${criticalSpikes} Critical Spikes (🔴)`;
+
+            document.getElementById('kpi-drops').innerText = (criticalDrops + normalDrops).toLocaleString();
+            document.getElementById('kpi-drops-sub').innerText = `${criticalDrops} Critical Drops (🚨)`;
+
+            // Update dropdown values
+            uniqueBrands = Array.from(brandsSet).sort();
+            uniqueCategories = Array.from(categoriesSet).sort();
+
+            populateDropdown('brand-filter', uniqueBrands, 'All Brands');
+            populateDropdown('cat-filter', uniqueCategories, 'All Categories');
+
+            applyFilters();
+        }
+
+        function populateDropdown(id, list, allText) {
+            const select = document.getElementById(id);
+            const currVal = select.value || 'ALL';
+            
+            select.innerHTML = `<option value="ALL">${allText}</option>`;
+            list.forEach(item => {
+                select.innerHTML += `<option value="${item}">${item}</option>`;
+            });
+
+            if (list.includes(currVal)) {
+                select.value = currVal;
+            } else {
+                select.value = 'ALL';
+            }
+        }
+
+        function applyFilters() {
+            const searchTerm = document.getElementById('anomaly-search').value.toLowerCase().trim();
+            const severityFilter = document.getElementById('severity-filter').value;
+            const brandFilter = document.getElementById('brand-filter').value;
+            const catFilter = document.getElementById('cat-filter').value;
+
+            const filtered = processedAnomalies.filter(a => {
+                // Brand filter
+                if (brandFilter !== 'ALL' && a.brand !== brandFilter) return false;
+                
+                // Category filter
+                if (catFilter !== 'ALL' && a.category !== catFilter) return false;
+
+                // Severity Class Filter
+                if (severityFilter !== 'ALL') {
+                    if (severityFilter === 'CRIT_SPIKE' && a.severity !== 'CRIT_SPIKE') return false;
+                    if (severityFilter === 'SPIKE' && a.severity !== 'SPIKE') return false;
+                    if (severityFilter === 'DROP' && a.severity !== 'DROP') return false;
+                    if (severityFilter === 'CRIT_DROP' && a.severity !== 'CRIT_DROP') return false;
+                    
+                    if (severityFilter === 'ALL_SPIKES' && a.severity !== 'CRIT_SPIKE' && a.severity !== 'SPIKE') return false;
+                    if (severityFilter === 'ALL_DROPS' && a.severity !== 'CRIT_DROP' && a.severity !== 'DROP') return false;
+                }
+
+                // Search keyword
+                if (searchTerm) {
+                    const matchFSN = a.fsn.toLowerCase().includes(searchTerm);
+                    const matchName = a.name.toLowerCase().includes(searchTerm);
+                    const matchBrand = a.brand.toLowerCase().includes(searchTerm);
+                    const matchCat = a.category.toLowerCase().includes(searchTerm);
+                    const matchDate = a.date.toLowerCase().includes(searchTerm);
+                    if (!matchFSN && !matchName && !matchBrand && !matchCat && !matchDate) return false;
+                }
+
+                return true;
+            });
+
+            // Sort: Chronological descending (newest first), then Critical Spikes / Drops first, then absolute deviation size descending
+            filtered.sort((a, b) => {
+                if (a.date !== b.date) {
+                    return b.date > a.date ? -1 : 1;
+                }
+                const getWeight = sev => {
+                    if (sev === 'CRIT_SPIKE') return 4;
+                    if (sev === 'CRIT_DROP') return 3;
+                    if (sev === 'SPIKE') return 2;
+                    return 1;
+                };
+                const weightDiff = getWeight(b.severity) - getWeight(a.severity);
+                if (weightDiff !== 0) return weightDiff;
+                return Math.abs(b.deviation) - Math.abs(a.deviation);
+            });
+
+            displayAnomalies(filtered);
+        }
+
+        function displayAnomalies(anomalies) {
+            const tbody = document.getElementById('anomaly-table-body');
+            const countLabel = document.getElementById('results-count');
+
+            countLabel.innerText = `Showing ${anomalies.length} of ${processedAnomalies.length} active triggers`;
+            tbody.innerHTML = '';
+
+            if (anomalies.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 48px; font-size: 0.9rem;">
+                            No active product-level anomalies found matching the filter criteria.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            anomalies.forEach(a => {
+                let badgeClass = '';
+                let typeText = '';
+                
+                if (a.severity === 'CRIT_SPIKE') {
+                    badgeClass = 'badge-crit-spike';
+                    typeText = '⚡ Critical Spike';
+                } else if (a.severity === 'SPIKE') {
+                    badgeClass = 'badge-spike';
+                    typeText = '▲ Spike';
+                } else if (a.severity === 'DROP') {
+                    badgeClass = 'badge-drop';
+                    typeText = '▼ Drop';
+                } else if (a.severity === 'CRIT_DROP') {
+                    badgeClass = 'badge-crit-drop';
+                    typeText = '🚨 Critical Drop';
+                }
+
+                const isSpike = a.severity === 'CRIT_SPIKE' || a.severity === 'SPIKE';
+                const devClass = isSpike ? 'delta-up' : 'delta-down';
+                const devSign = a.deviation > 0 ? '+' : '';
+                const devText = `${devSign}${a.deviation.toFixed(1)}`;
+
+                tbody.innerHTML += `
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.02); height: 42px;">
+                        <td style="padding: 10px 12px; font-family: monospace; color: var(--accent-blue); letter-spacing: 0.5px; font-weight: 500;">${a.fsn}</td>
+                        <td style="padding: 10px 12px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;" title="${a.name}">${a.name}</td>
+                        <td style="padding: 10px 12px; white-space: nowrap;">${a.brand}</td>
+                        <td style="padding: 10px 12px; white-space: nowrap;">${a.category}</td>
+                        <td style="padding: 10px 12px; text-align: right; font-weight: 500;">₹${a.latestRevenue.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                        <td style="padding: 10px 12px; text-align: right; color: var(--text-secondary);">₹${a.baselineRevenueAvg.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                        <td class="${devClass}" style="padding: 10px 12px; text-align: right; font-weight: 500;">${devText}%</td>
+                        <td style="padding: 10px 12px; text-align: center;"><span class="badge ${badgeClass}">${typeText}</span></td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Sync sheet function
+        function syncGoogleSheets() {
+            const sheetUrlInput = document.getElementById('sheet-url');
+            const tabNameInput = document.getElementById('sheet-tab-name');
+            
+            const sheetUrl = sheetUrlInput.value.trim();
+            const tabName = tabNameInput.value.trim();
+
+            if (!sheetUrl) {
+                alert("Please enter a valid Google Sheets published CSV URL.");
+                return;
+            }
+
+            const syncDot = document.getElementById('sync-dot');
+            const syncText = document.getElementById('sync-text');
+            
+            syncDot.className = "status-dot status-stale";
+            syncText.innerText = "Syncing with proxy...";
+
+            // Create a proxy request to fetch live sheet via server backend bypass
+            // This mirrors the index.html Sheets syncing mechanism
+            let exportUrl = sheetUrl;
+            if (sheetUrl.includes('/edit') || sheetUrl.includes('/d/')) {
+                // If it is a normal URL, try formatting to web published format
+                const match = sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                if (match && match[1]) {
+                    const spreadsheetId = match[1];
+                    exportUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tabName)}`;
+                }
+            }
+
+            const proxyEndpoint = `/proxy-sync?url=${encodeURIComponent(exportUrl)}`;
+            
+            fetch(proxyEndpoint)
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(t => { throw new Error(t); });
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    processCSVText(csvText);
+                    syncDot.className = "status-dot status-synced";
+                    syncText.innerText = "Synced with Google Sheet";
+                    document.getElementById('last-sync-time').innerText = new Date().toLocaleTimeString();
+                    alert("Google Sheet successfully synchronized and saved to local raw_transaction_data.csv!");
+                })
+                .catch(err => {
+                    syncDot.className = "status-dot status-error";
+                    syncText.innerText = "Synchronization Error";
+                    showError(`Sheet sync failed: ${err.message}`);
+                    alert(`Sync Error: ${err.message}`);
+                });
+        }
+
+        // Export active anomalies as CSV
+        function exportAnomalyCSV() {
+            if (processedAnomalies.length === 0) {
+                alert("No anomalies to export.");
+                return;
+            }
+
+            const headers = ["Product ID (FSN)", "Product Name", "Brand", "Category", "Spiked Revenue (D-1)", "Baseline Revenue Avg (D-2 to D-8)", "Revenue Spike (%)", "Severity Trigger"];
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += headers.join(",") + "\n";
+
+            processedAnomalies.forEach(a => {
+                const row = [
+                    a.fsn,
+                    `"${a.name.replace(/"/g, '""')}"`,
+                    a.brand,
+                    a.category,
+                    a.latestRevenue.toFixed(2),
+                    a.baselineRevenueAvg.toFixed(2),
+                    `${a.deviation.toFixed(2)}%`,
+                    a.severity
+                ];
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "product_sales_anomalies_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
