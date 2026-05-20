@@ -1022,63 +1022,6 @@
         </div>
     </section>
 
-    <!-- 9. SECTION: Demand Weights -->
-    <section id="module-demand" class="dashboard-section full-width" aria-label="Product Demand Index">
-        <div class="panel">
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title">Entity Demand Score Weights</h2>
-                    <p class="panel-subtitle">Weighted demand score metrics across selection: 40% Search Rank | 30% Conversion Rate | 30% Repeat Ratio</p>
-                </div>
-            </div>
-            <div class="demand-grid" id="demand-tiles-container">
-                <!-- Cards generated dynamically -->
-            </div>
-        </div>
-    </section>
-
-    <!-- SETUP DOCUMENTATION & README -->
-    <section class="panel" style="margin-top: 40px; border-color: var(--accent-purple);" aria-label="System Documentation">
-        <div class="panel-header" style="border-bottom-color: var(--accent-purple);">
-            <h2 class="panel-title" style="color: var(--accent-purple);">SYSTEM SETUP & README</h2>
-        </div>
-        <div style="font-size: 0.9rem; line-height: 1.6; color: var(--text-secondary);">
-            <h3 style="color: var(--text-primary); margin: 16px 0 8px 0; font-size: 1rem;">1. Google Sheets Live Integration</h3>
-            <p style="margin-bottom: 8px;">To feed the dashboard with live, auto-updating data directly from your master workbook, configure Google Sheets as follows:</p>
-            <ol style="margin-left: 20px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px;">
-                <li>Open your Google Sheet containing the transaction records.</li>
-                <li>Go to <strong>File &gt; Share &gt; Publish to web</strong>.</li>
-                <li>Choose the sheet tab containing your data (e.g. <code>RawData</code>).</li>
-                <li>Set the export type to <strong>Comma-separated values (.csv)</strong>.</li>
-                <li>Click <strong>Publish</strong> and copy the generated link.</li>
-                <li>Paste the URL directly in the URL input bar above and hit <strong>Sync Sheets</strong>.</li>
-            </ol>
-            
-            <h3 style="color: var(--text-primary); margin: 16px 0 8px 0; font-size: 1rem;">2. Schema & CSV Columns Alignment</h3>
-            <p style="margin-bottom: 8px;">The system implements robust, fuzzy column mapping that is case-insensitive and replaces spaces/underscores. Make sure your sheets/CSV contains these column names:</p>
-            <table style="width: 100%; border: 1px solid var(--border); margin: 12px 0;">
-                <thead>
-                    <tr>
-                        <th style="padding: 6px 12px;">Standard Column</th>
-                        <th style="padding: 6px 12px;">Fuzzy Aliases Allowed</th>
-                        <th style="padding: 6px 12px;">Expectation</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td style="padding: 6px 12px;">Date</td><td style="padding: 6px 12px;">date, Transaction_Date, date_str</td><td style="padding: 6px 12px;">YYYY-MM-DD</td></tr>
-                    <tr><td style="padding: 6px 12px;">FSN</td><td style="padding: 6px 12px;">fsn, product_id, sku</td><td style="padding: 6px 12px;">Unique FirstClub Serial Number</td></tr>
-                    <tr><td style="padding: 6px 12px;">Units_Sold</td><td style="padding: 6px 12px;">units, units_sold, Qty, quantity</td><td style="padding: 6px 12px;">Integer count</td></tr>
-                    <tr><td style="padding: 6px 12px;">Revenue</td><td style="padding: 6px 12px;">revenue, total_revenue, sales</td><td style="padding: 6px 12px;">INR values</td></tr>
-                    <tr><td style="padding: 6px 12px;">Sell_Price</td><td style="padding: 6px 12px;">price, sell_price, selling_price, inr_price</td><td style="padding: 6px 12px;">Transaction selling price</td></tr>
-                    <tr><td style="padding: 6px 12px;">Comp_Price</td><td style="padding: 6px 12px;">comp_price, competitor_price, comp_price_inr</td><td style="padding: 6px 12px;">Benchmark comp price (INR)</td></tr>
-                    <tr><td style="padding: 6px 12px;">Instock_Pct</td><td style="padding: 6px 12px;">instock_pct, stock_pct, instock, availability</td><td style="padding: 6px 12px;">Float 0 to 100</td></tr>
-                </tbody>
-            </table>
-            
-            <h3 style="color: var(--text-primary); margin: 16px 0 8px 0; font-size: 1rem;">3. Local File Offline Processing</h3>
-            <p>If you have generated the local dataset using our Python generation script (<code>raw_transaction_data.csv</code>), you don't even need Google Sheets! Click the <strong>Upload CSV File</strong> button in the sync row to run full aggregation models locally in the browser immediately.</p>
-        </div>
-    </section>
 
     <!-- CORE LOGIC: JS ENGINE -->
     <script>
