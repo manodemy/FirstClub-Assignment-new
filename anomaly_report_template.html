@@ -1181,9 +1181,12 @@
                 panelHeader.style.top = headerH + 'px';
                 panelHeader.style.zIndex = '90';
                 panelHeader.style.backgroundColor = 'var(--bg-surface)';
-                panelHeader.style.paddingTop = '12px';
-                panelHeader.style.paddingBottom = '12px';
-                panelHeader.style.marginTop = '-12px';
+                panelHeader.style.marginTop = '-20px';
+                panelHeader.style.paddingTop = '20px';
+                
+                // Replace margin-bottom with padding-bottom to close the gap
+                panelHeader.style.marginBottom = '0';
+                panelHeader.style.paddingBottom = '16px';
             }
 
             // Make table <th> cells sticky below the panel header
