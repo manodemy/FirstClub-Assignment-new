@@ -37,7 +37,7 @@
             color: var(--text-primary);
             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-weight: 400;
-            padding: 24px;
+            padding: 0 24px 24px 24px;
             min-height: 100vh;
             line-height: 1.5;
         }
@@ -53,10 +53,14 @@
 
         /* Header Bar styling */
         header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background-color: var(--bg-primary);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding-bottom: 20px;
+            padding: 24px 0 20px 0;
             border-bottom: 1px solid var(--border);
             margin-bottom: 24px;
             flex-wrap: wrap;
@@ -487,11 +491,9 @@
     <!-- 1. HEADER BAR -->
     <header>
         <div class="brand-logo-container">
-            <a href="index.html" class="fk-logo">FK FirstClub</a>
-            <div>
-                <h1 class="dashboard-title">Product Sales Anomalies Engine</h1>
-                <a href="index.html" class="navigation-link">← Return to Category Intelligence Dashboard</a>
-            </div>
+            <span class="fk-logo">FirstClub Assignment</span>
+            <span class="dashboard-title">Product Sales Anomalies Engine</span>
+            <a href="index.html" class="navigation-link">&larr; Return to Category Intelligence Dashboard</a>
         </div>
         
         <div class="status-container">
@@ -648,6 +650,7 @@
         let processedAnomalies = [];
         let uniqueBrands = [];
         let uniqueCategories = [];
+        let evaluationDate = "";
 
         window.addEventListener('DOMContentLoaded', () => {
             initializeSyncState();
@@ -839,17 +842,14 @@
             dataset = newDataset;
             if (dataset.length === 0) return;
 
-            // Sort globally once chronologically
             dataset.sort((a, b) => a.Date > b.Date ? 1 : (a.Date < b.Date ? -1 : 0));
             
-            // Extract unique dates in order
             const uniqueDates = Array.from(new Set(dataset.map(r => r.Date))).sort();
             if (uniqueDates.length < 8) {
                 showError("The dataset must cover at least 8 distinct dates to evaluate 7-day baselines.");
                 return;
             }
 
-            // Group transactions by product (FSN) and build date lookup
             const productLookup = {};
             const allProducts = {};
             const brandsSet = new Set();
@@ -877,14 +877,12 @@
                 brandsSet.add(row.Brand);
                 categoriesSet.add(row.Category);
             });
-            // Only analyze the latest date in the dataset compared to its trailing 7 days
             const targetDateIndex = uniqueDates.length - 1;
-            const targetDate = uniqueDates[targetDateIndex];
+            evaluationDate = uniqueDates[targetDateIndex];
             const baselineDates = uniqueDates.slice(targetDateIndex - 7, targetDateIndex);
 
-            document.getElementById('table-title').innerText = `Product Anomaly Tracking Table (Evaluation Date: ${targetDate})`;
+            document.getElementById('table-title').innerText = `Product Anomaly Tracking Table (Evaluation Date: ${evaluationDate})`;
 
-            // Compute metrics and search for anomalies for each date
             processedAnomalies = [];
             let totalCheckedProducts = Object.keys(allProducts).length;
             document.getElementById('kpi-total-checked').innerText = totalCheckedProducts.toLocaleString();
@@ -898,12 +896,10 @@
             Object.keys(allProducts).forEach(fsn => {
                 const p = allProducts[fsn];
                 
-                // Get D-1 (target date) sales units and revenue
-                const latestData = productLookup[fsn][targetDate] || { units: 0, revenue: 0 };
+                const latestData = productLookup[fsn][evaluationDate] || { units: 0, revenue: 0 };
                 const latestSales = latestData.units;
                 const latestRevenue = latestData.revenue;
 
-                // Trailing 7D sum of sales and revenue
                 let baselineSalesSum = 0;
                 let baselineRevenueSum = 0;
                 baselineDates.forEach(d => {
@@ -914,35 +910,28 @@
                 const baselineSalesAvg = baselineSalesSum / 7;
                 const baselineRevenueAvg = baselineRevenueSum / 7;
 
-                // Anomaly Detection Algorithm using the Revenue Spike (%) Formula:
-                // Revenue Spike (%) = ((Spiked Revenue - Baseline Revenue) / Baseline Revenue) * 100
-                let severity = null; // 'CRIT_SPIKE', 'SPIKE', 'DROP', 'CRIT_DROP'
-                let deviation = 0; // This stores the Revenue Spike (%)
+                let severity = null;
+                let deviation = 0;
 
                 if (baselineRevenueAvg > 0) {
                     deviation = ((latestRevenue - baselineRevenueAvg) / baselineRevenueAvg) * 100;
                 } else if (latestRevenue > 0) {
-                    deviation = 100; // 100% growth fallback from zero baseline
+                    deviation = 100;
                 }
 
-                // Rule Evaluator based on Revenue Spike (%) and units sold thresholds:
-                // 1. Critical Drops
                 if (latestSales === 0 && baselineSalesAvg >= 3.0) {
                     severity = 'CRIT_DROP';
                 } else if (deviation <= -85.0 && baselineSalesAvg >= 4.0) {
                     severity = 'CRIT_DROP';
                 }
-                // 2. Volumetric Drops
                 else if (deviation <= -55.0 && baselineSalesAvg >= 2.0) {
                     severity = 'DROP';
                 }
-                // 3. Critical Spikes
                 else if (deviation >= 200.0 && latestSales >= 10) {
                     severity = 'CRIT_SPIKE';
                 } else if (baselineRevenueAvg === 0 && latestSales >= 10) {
                     severity = 'CRIT_SPIKE';
                 }
-                // 4. Volumetric Spikes
                 else if (deviation >= 80.0 && latestSales >= 5) {
                     severity = 'SPIKE';
                 } else if (baselineRevenueAvg === 0 && latestSales >= 5) {
@@ -957,7 +946,7 @@
                     else if (severity === 'CRIT_DROP') criticalDrops++;
 
                     processedAnomalies.push({
-                        date: targetDate,
+                        date: evaluationDate,
                         fsn: p.fsn,
                         name: p.name,
                         brand: p.brand,
@@ -965,19 +954,17 @@
                         latestSales: latestSales,
                         latestRevenue: latestRevenue,
                         baselineRevenueAvg: baselineRevenueAvg,
-                        deviation: deviation, // Revenue Spike (%)
+                        deviation: deviation,
                         severity: severity
                     });
                 }
             });
 
-            // Update KPI cards
             document.getElementById('kpi-crit-spikes').innerText = criticalSpikes.toLocaleString();
             document.getElementById('kpi-norm-spikes').innerText = normalSpikes.toLocaleString();
             document.getElementById('kpi-norm-drops').innerText = normalDrops.toLocaleString();
             document.getElementById('kpi-crit-drops').innerText = criticalDrops.toLocaleString();
 
-            // Update dropdown values
             uniqueBrands = Array.from(brandsSet).sort();
             uniqueCategories = Array.from(categoriesSet).sort();
 
@@ -1004,59 +991,38 @@
         }
 
         function applyFilters() {
-            const searchTerm = document.getElementById('anomaly-search').value.toLowerCase().trim();
+            const searchTerm = document.getElementById('anomaly-search').value.toLowerCase();
             const severityFilter = document.getElementById('severity-filter').value;
             const brandFilter = document.getElementById('brand-filter').value;
-            const catFilter = document.getElementById('cat-filter').value;
-
-            const filtered = processedAnomalies.filter(a => {
-                // Brand filter
-                if (brandFilter !== 'ALL' && a.brand !== brandFilter) return false;
+            const categoryFilter = document.getElementById('cat-filter').value;
+            
+            const filtered = processedAnomalies.filter(item => {
+                const searchMatch = !searchTerm || 
+                    item.fsn.toLowerCase().includes(searchTerm) || 
+                    item.name.toLowerCase().includes(searchTerm) || 
+                    item.brand.toLowerCase().includes(searchTerm) || 
+                    item.category.toLowerCase().includes(searchTerm);
                 
-                // Category filter
-                if (catFilter !== 'ALL' && a.category !== catFilter) return false;
-
-                // Severity Class Filter
+                let severityMatch = true;
                 if (severityFilter !== 'ALL') {
-                    if (severityFilter === 'CRIT_SPIKE' && a.severity !== 'CRIT_SPIKE') return false;
-                    if (severityFilter === 'SPIKE' && a.severity !== 'SPIKE') return false;
-                    if (severityFilter === 'DROP' && a.severity !== 'DROP') return false;
-                    if (severityFilter === 'CRIT_DROP' && a.severity !== 'CRIT_DROP') return false;
-                    
-                    if (severityFilter === 'ALL_SPIKES' && a.severity !== 'CRIT_SPIKE' && a.severity !== 'SPIKE') return false;
-                    if (severityFilter === 'ALL_DROPS' && a.severity !== 'CRIT_DROP' && a.severity !== 'DROP') return false;
+                    if (severityFilter === 'ALL_SPIKES') {
+                        severityMatch = (item.severity === 'CRIT_SPIKE' || item.severity === 'SPIKE');
+                    } else if (severityFilter === 'ALL_DROPS') {
+                        severityMatch = (item.severity === 'CRIT_DROP' || item.severity === 'DROP');
+                    } else {
+                        severityMatch = (item.severity === severityFilter);
+                    }
                 }
-
-                // Search keyword
-                if (searchTerm) {
-                    const matchFSN = a.fsn.toLowerCase().includes(searchTerm);
-                    const matchName = a.name.toLowerCase().includes(searchTerm);
-                    const matchBrand = a.brand.toLowerCase().includes(searchTerm);
-                    const matchCat = a.category.toLowerCase().includes(searchTerm);
-                    const matchDate = a.date.toLowerCase().includes(searchTerm);
-                    if (!matchFSN && !matchName && !matchBrand && !matchCat && !matchDate) return false;
-                }
-
-                return true;
+                
+                const brandMatch = brandFilter === 'ALL' || item.brand === brandFilter;
+                const categoryMatch = categoryFilter === 'ALL' || item.category === categoryFilter;
+                
+                return searchMatch && severityMatch && brandMatch && categoryMatch;
             });
-
-            // Sort: Chronological descending (newest first), then Critical Spikes / Drops first, then absolute deviation size descending
-            filtered.sort((a, b) => {
-                if (a.date !== b.date) {
-                    return b.date > a.date ? -1 : 1;
-                }
-                const getWeight = sev => {
-                    if (sev === 'CRIT_SPIKE') return 4;
-                    if (sev === 'CRIT_DROP') return 3;
-                    if (sev === 'SPIKE') return 2;
-                    return 1;
-                };
-                const weightDiff = getWeight(b.severity) - getWeight(a.severity);
-                if (weightDiff !== 0) return weightDiff;
-                return Math.abs(b.deviation) - Math.abs(a.deviation);
-            });
-
+            
             displayAnomalies(filtered);
+            // Re-apply sticky offsets if table changed
+            setTimeout(updateStickyHeaders, 50);
         }
 
         function displayAnomalies(anomalies) {
@@ -1134,11 +1100,8 @@
             syncDot.className = "status-dot status-stale";
             syncText.innerText = "Syncing with proxy...";
 
-            // Create a proxy request to fetch live sheet via server backend bypass
-            // This mirrors the index.html Sheets syncing mechanism
             let exportUrl = sheetUrl;
             if (sheetUrl.includes('/edit') || sheetUrl.includes('/d/')) {
-                // If it is a normal URL, try formatting to web published format
                 const match = sheetUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
                 if (match && match[1]) {
                     const spreadsheetId = match[1];
@@ -1170,39 +1133,81 @@
                 });
         }
 
-        // Export active anomalies as CSV
         function exportAnomalyCSV() {
             if (processedAnomalies.length === 0) {
-                alert("No anomalies to export.");
+                alert("No anomaly data available to export.");
                 return;
             }
 
-            const headers = ["Product ID (FSN)", "Product Name", "Brand", "Category", "Spiked Revenue (D-1)", "Baseline Revenue Avg (D-2 to D-8)", "Revenue Spike (%)", "Severity Trigger"];
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += headers.join(",") + "\n";
+            const headers = ["Date", "FSN", "Product Name", "Brand", "Category", "Spiked Revenue (D-1)", "Baseline Revenue Avg (D-2 to D-8)", "Revenue Spike (%)", "Severity Class"];
+            let csvContent = headers.join(",") + "\n";
 
             processedAnomalies.forEach(a => {
+                const safeName = a.name.replace(/"/g, '""');
                 const row = [
+                    a.date,
                     a.fsn,
-                    `"${a.name.replace(/"/g, '""')}"`,
-                    a.brand,
-                    a.category,
+                    `"${safeName}"`,
+                    `"${a.brand}"`,
+                    `"${a.category}"`,
                     a.latestRevenue.toFixed(2),
                     a.baselineRevenueAvg.toFixed(2),
-                    `${a.deviation.toFixed(2)}%`,
+                    a.deviation.toFixed(1),
                     a.severity
                 ];
                 csvContent += row.join(",") + "\n";
             });
 
-            const encodedUri = encodeURI(csvContent);
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "product_sales_anomalies_report.csv");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `anomaly_report_${evaluationDate}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
+
+        // Sticky table header logic
+        function updateStickyHeaders() {
+            const headerEl = document.querySelector('header');
+            if (!headerEl) return;
+            const headerH = headerEl.offsetHeight;
+
+            // Make panel-header sticky just below the page header
+            const panelHeader = document.querySelector('.panel-header');
+            if (panelHeader) {
+                panelHeader.style.position = 'sticky';
+                panelHeader.style.top = headerH + 'px';
+                panelHeader.style.zIndex = '90';
+                panelHeader.style.backgroundColor = 'var(--bg-surface)';
+                panelHeader.style.paddingTop = '12px';
+                panelHeader.style.paddingBottom = '12px';
+                panelHeader.style.marginTop = '-12px';
+            }
+
+            // Make table <th> cells sticky below the panel header
+            const ths = document.querySelectorAll('table thead th');
+            if (ths.length > 0 && panelHeader) {
+                const thTop = headerH + panelHeader.offsetHeight;
+                ths.forEach(th => {
+                    th.style.position = 'sticky';
+                    th.style.top = thTop + 'px';
+                    th.style.zIndex = '80';
+                    th.style.backgroundColor = 'var(--bg-surface)';
+                });
+            }
+        }
+
+        window.addEventListener('load', () => {
+            if (DEMO_DATA && DEMO_DATA.length > 0) {
+                document.getElementById('sync-dot').className = 'status-dot status-synced';
+                document.getElementById('sync-text').innerText = 'Demo Dataset loaded';
+                processDataset(DEMO_DATA);
+            }
+            updateStickyHeaders();
+        });
+        window.addEventListener('resize', updateStickyHeaders);
     </script>
 </body>
 </html>
