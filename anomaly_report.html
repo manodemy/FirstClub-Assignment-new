@@ -103051,9 +103051,9 @@
                 tag: 'Table Column',
                 title: 'Baseline Revenue Avg (D-2 to D-8)',
                 body: `<p>The <strong>7-day daily average revenue</strong> for this product, calculated over the 7 calendar days immediately before the evaluation date (D-2 through D-8).</p>
-                    <div class="metric-formula-box">Baseline Avg = SUM(Revenue for D-2, D-3, D-4, D-5, D-6, D-7, D-8) ÷ 7</div>
+                    <div class="metric-formula-box">Baseline Avg = SUM(Revenue for D-2...D-8) ÷ Number of Baseline Days</div>
                     <p>This represents the product's <em>typical expected daily revenue</em>. It is a rolling mean, not a cumulative total. The D-1 evaluation day is excluded from the baseline to prevent circular comparison.</p>
-                    <div class="metric-note">📐 Because this is a per-day average, values are of the same magnitude as a single day's revenue — this is mathematically correct and expected.</div>`
+                    <div class="metric-note">📐 Note: For custom uploads with fewer than 8 days of history or date gaps, the baseline is calculated over the actual available historical days.</div>`
             },
             'col-deviation': {
                 tag: 'Table Column',
@@ -103334,7 +103334,8 @@
             });
             const targetDateIndex = uniqueDates.length - 1;
             evaluationDate = uniqueDates[targetDateIndex];
-            const baselineDates = uniqueDates.slice(targetDateIndex - 7, targetDateIndex);
+            const startIndex = Math.max(0, targetDateIndex - 7);
+            const baselineDates = uniqueDates.slice(startIndex, targetDateIndex);
 
             document.getElementById('table-title').innerText = `Product Anomaly Tracking Table (Evaluation Date: ${evaluationDate})`;
 
@@ -103362,8 +103363,9 @@
                     baselineSalesSum += dataAtDate.units;
                     baselineRevenueSum += dataAtDate.revenue;
                 });
-                const baselineSalesAvg = baselineSalesSum / 7;
-                const baselineRevenueAvg = baselineRevenueSum / 7;
+                const divisor = baselineDates.length || 1;
+                const baselineSalesAvg = baselineSalesSum / divisor;
+                const baselineRevenueAvg = baselineRevenueSum / divisor;
 
                 let severity = null;
                 let deviation = 0;

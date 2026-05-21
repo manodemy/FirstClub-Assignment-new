@@ -103321,9 +103321,9 @@ for all rows where Date ≥ Period Start AND filters match</div>
             'avg-instock': {
                 tag: 'KPI Card',
                 title: 'Avg In-Stock %',
-                body: `<p>The <strong>average stock availability rate</strong> across all active products in the selected filter scope during the analysis period. It is measured as a percentage of days a product was in stock.</p>
-                    <div class="metric-formula-box">Avg In-Stock % = MEAN(Stock_Level %)
-for all rows where filters match AND Date in period
+                body: `<p>The <strong>average stock availability rate</strong> across all active products in the selected filter scope during the analysis period. It is measured as a percentage of days a product was in stock, weighted equally by product (FSN).</p>
+                    <div class="metric-formula-box">Avg In-Stock % = MEAN( MEAN(Stock_Level % per FSN) )
+for all products where filters match AND Date in period
 
 Benchmarks:
   ≥ 70% → Green (Healthy)
@@ -103655,9 +103655,11 @@ CI Gap % = ((Competitor_Price − Sell_Price) / Competitor_Price) × 100</div>
                 g.firstHalfASP = fHalfUnits > 0 ? (fHalfRevenue / fHalfUnits) : 0;
                 g.secondHalfASP = sHalfUnits > 0 ? (sHalfRevenue / sHalfUnits) : 0;
 
-                // PoP Growth Calculations (first-half vs second-half)
-                g.growth = fHalfUnits > 0 ? ((sHalfUnits - fHalfUnits) / fHalfUnits) * 100 : 0;
-                g.revenueGrowth = fHalfRevenue > 0 ? ((sHalfRevenue - fHalfRevenue) / fHalfRevenue) * 100 : 0;
+                // PoP Growth Calculations (first-half vs second-half) - normalized by respective day counts to eliminate odd-period bias
+                const sHalfDays = halfDays;
+                const fHalfDays = selectedPeriod - halfDays;
+                g.growth = fHalfUnits > 0 ? (((sHalfUnits * fHalfDays) - (fHalfUnits * sHalfDays)) / (fHalfUnits * sHalfDays)) * 100 : 0;
+                g.revenueGrowth = fHalfRevenue > 0 ? (((sHalfRevenue * fHalfDays) - (fHalfRevenue * sHalfDays)) / (fHalfRevenue * sHalfDays)) * 100 : 0;
             });
 
             // 3. Render KPIs, charts, data summaries, and lists
@@ -103676,30 +103678,57 @@ CI Gap % = ((Competitor_Price − Sell_Price) / Competitor_Price) × 100</div>
         function renderKPIs(rows, grouped, latestDate, cutoffDate) {
             let totalRevenue = 0;
             let totalUnits = 0;
-            let instockSum = 0, instockCount = 0;
             let competitiveAdvantageCount = 0;
             let totalMatchingPositions = 0;
-            let oosCount = 0;
             let growingCount = 0;
             let priceHikes = 0;
 
             // Compute selection aggregates for PoP deltas
             let firstHalfRevenue = 0, secondHalfRevenue = 0;
             let firstHalfUnits = 0, secondHalfUnits = 0;
-            let firstHalfInstockSum = 0, firstHalfInstockCount = 0;
-            let secondHalfInstockSum = 0, secondHalfInstockCount = 0;
 
             const halfDays = Math.ceil(selectedPeriod / 2);
             const midCutoffDate = new Date(latestDate);
             midCutoffDate.setDate(latestDate.getDate() - halfDays + 1);
 
+            // Compute average stock level per FSN, then average across all FSNs (FSN-weighted)
+            const fsnStockSum = {};
+            const fsnStockCount = {};
+            const fsnFirstHalfStockSum = {};
+            const fsnFirstHalfStockCount = {};
+            const fsnSecondHalfStockSum = {};
+            const fsnSecondHalfStockCount = {};
+
+            // Compute OOS risk at individual FSN grain level (grain-independent)
+            const fsnLatestStock = {};
+
             rows.forEach(r => {
                 totalRevenue += r.Revenue;
                 totalUnits += r.Units_Sold;
                 
+                // Track FSN-weighted stocks
                 if (r.Instock_Pct !== undefined && !isNaN(r.Instock_Pct)) {
-                    instockSum += r.Instock_Pct;
-                    instockCount++;
+                    if (!fsnStockSum[r.FSN]) {
+                        fsnStockSum[r.FSN] = 0; fsnStockCount[r.FSN] = 0;
+                        fsnFirstHalfStockSum[r.FSN] = 0; fsnFirstHalfStockCount[r.FSN] = 0;
+                        fsnSecondHalfStockSum[r.FSN] = 0; fsnSecondHalfStockCount[r.FSN] = 0;
+                    }
+                    fsnStockSum[r.FSN] += r.Instock_Pct;
+                    fsnStockCount[r.FSN]++;
+
+                    const d = new Date(r.Date);
+                    if (d < midCutoffDate) {
+                        fsnFirstHalfStockSum[r.FSN] += r.Instock_Pct;
+                        fsnFirstHalfStockCount[r.FSN]++;
+                    } else {
+                        fsnSecondHalfStockSum[r.FSN] += r.Instock_Pct;
+                        fsnSecondHalfStockCount[r.FSN]++;
+                    }
+
+                    // Track latest stock per FSN for global OOS Risk calculation
+                    if (!fsnLatestStock[r.FSN] || r.Date > fsnLatestStock[r.FSN].date) {
+                        fsnLatestStock[r.FSN] = { date: r.Date, pct: r.Instock_Pct };
+                    }
                 }
 
                 if (r.Sell_Price !== undefined && r.Comp_Price !== undefined && r.Comp_Price > 0) {
@@ -103713,31 +103742,41 @@ CI Gap % = ((Competitor_Price − Sell_Price) / Competitor_Price) × 100</div>
                 if (d < midCutoffDate) {
                     firstHalfRevenue += r.Revenue;
                     firstHalfUnits += r.Units_Sold;
-                    if (r.Instock_Pct !== undefined && !isNaN(r.Instock_Pct)) {
-                        firstHalfInstockSum += r.Instock_Pct;
-                        firstHalfInstockCount++;
-                    }
                 } else {
                     secondHalfRevenue += r.Revenue;
                     secondHalfUnits += r.Units_Sold;
-                    if (r.Instock_Pct !== undefined && !isNaN(r.Instock_Pct)) {
-                        secondHalfInstockSum += r.Instock_Pct;
-                        secondHalfInstockCount++;
-                    }
                 }
             });
+
+            // Calculate OOS Count globally at the individual FSN level (grain-independent)
+            const oosCount = Object.values(fsnLatestStock).filter(v => v.pct < 40).length;
+
+            // Compute final FSN-weighted average stocks
+            let fsnAvgs = [];
+            let fsnFirstHalfAvgs = [];
+            let fsnSecondHalfAvgs = [];
+
+            Object.keys(fsnStockSum).forEach(fsn => {
+                const count = fsnStockCount[fsn];
+                if (count > 0) fsnAvgs.push(fsnStockSum[fsn] / count);
+
+                const fCount = fsnFirstHalfStockCount[fsn];
+                if (fCount > 0) fsnFirstHalfAvgs.push(fsnFirstHalfStockSum[fsn] / fCount);
+
+                const sCount = fsnSecondHalfStockCount[fsn];
+                if (sCount > 0) fsnSecondHalfAvgs.push(fsnSecondHalfStockSum[fsn] / sCount);
+            });
+
+            const avgInstock = fsnAvgs.length > 0 ? (fsnAvgs.reduce((a, b) => a + b, 0) / fsnAvgs.length) : 0;
+            const firstHalfStock = fsnFirstHalfAvgs.length > 0 ? (fsnFirstHalfAvgs.reduce((a, b) => a + b, 0) / fsnFirstHalfAvgs.length) : 0;
+            const secondHalfStock = fsnSecondHalfAvgs.length > 0 ? (fsnSecondHalfAvgs.reduce((a, b) => a + b, 0) / fsnSecondHalfAvgs.length) : 0;
+            const stockDelta = secondHalfStock - firstHalfStock;
 
             // Compute metrics per drill-down entity
             const entities = Object.values(grouped);
             entities.forEach(e => {
                 // Growing Entities are unique entities with positive Units growth
                 if (e.growth > 0) growingCount++;
-                
-                // Evaluate OOS Risk for latest date in active selection
-                const latestRow = e.rawRows[e.rawRows.length - 1];
-                if (latestRow && latestRow.Instock_Pct < 40) {
-                    oosCount++;
-                }
 
                 // Evaluate price hikes based on first half vs second half ASP comparison
                 if (e.firstHalfUnits > 0 && e.secondHalfUnits > 0) {
@@ -103754,8 +103793,6 @@ CI Gap % = ((Competitor_Price − Sell_Price) / Competitor_Price) × 100</div>
             // Set metric content
             document.getElementById('kpi-revenue').innerText = formatINR(totalRevenue);
             document.getElementById('kpi-units').innerText = totalUnits.toLocaleString('en-IN');
-            
-            const avgInstock = instockCount > 0 ? (instockSum / instockCount) : 0;
             document.getElementById('kpi-instock').innerText = avgInstock.toFixed(1) + "%";
             
             const overallASP = totalUnits > 0 ? (totalRevenue / totalUnits) : 0;
@@ -103766,13 +103803,13 @@ CI Gap % = ((Competitor_Price − Sell_Price) / Competitor_Price) × 100</div>
             document.getElementById('kpi-hikes').innerText = priceHikes;
             document.getElementById('kpi-ci').innerText = competitiveAdvantageCount;
 
-            // PoP Deltas Calculations
-            const revDelta = firstHalfRevenue > 0 ? ((secondHalfRevenue - firstHalfRevenue) / firstHalfRevenue) * 100 : 0;
-            const unitsDelta = firstHalfUnits > 0 ? ((secondHalfUnits - firstHalfUnits) / firstHalfUnits) * 100 : 0;
+            // PoP Deltas Calculations - normalized by respective day counts to eliminate odd-period bias
+            const sHalfDays = halfDays;
+            const fHalfDays = selectedPeriod - halfDays;
+            const revDelta = firstHalfRevenue > 0 ? (((secondHalfRevenue * fHalfDays) - (firstHalfRevenue * sHalfDays)) / (firstHalfRevenue * sHalfDays)) * 100 : 0;
+            const unitsDelta = firstHalfUnits > 0 ? (((secondHalfUnits * fHalfDays) - (firstHalfUnits * sHalfDays)) / (firstHalfUnits * sHalfDays)) * 100 : 0;
 
-            const firstHalfAvgInstock = firstHalfInstockCount > 0 ? (firstHalfInstockSum / firstHalfInstockCount) : 0;
-            const secondHalfAvgInstock = secondHalfInstockCount > 0 ? (secondHalfInstockSum / secondHalfInstockCount) : 0;
-            const instockDelta = secondHalfAvgInstock - firstHalfAvgInstock;
+            const instockDelta = stockDelta;
 
             const firstHalfASP = firstHalfUnits > 0 ? (firstHalfRevenue / firstHalfUnits) : 0;
             const secondHalfASP = secondHalfUnits > 0 ? (secondHalfRevenue / secondHalfUnits) : 0;
@@ -104704,9 +104741,9 @@ CI Gap % = ((Competitor_Price − Sell_Price) / Competitor_Price) × 100</div>
             const fsns = Array.from(new Set(rows.map(r => r.FSN))).sort();
 
             rows.forEach(r => {
-                // 1. Revenue Consistency: Revenue should be close to Units * Price
+                // 1. Revenue Consistency: Revenue should be close to Units * Price (1.0 rupee tolerance)
                 const expectedRev = r.Units_Sold * r.Sell_Price;
-                if (Math.abs(expectedRev - r.Revenue) > 2) {
+                if (Math.abs(expectedRev - r.Revenue) > 1.0) {
                     revMismatches++;
                 }
 
@@ -104715,10 +104752,10 @@ CI Gap % = ((Competitor_Price − Sell_Price) / Competitor_Price) × 100</div>
                     zeroOrNegPrices++;
                 }
 
-                // 3. Competitor price check: If Comp_Price is way higher or lower
+                // 3. Competitor price check: If Comp_Price is way higher or lower (relaxed to > 200% to support portfolio diversity)
                 if (r.Comp_Price > 0) {
                     const priceGap = Math.abs(r.Sell_Price - r.Comp_Price) / r.Comp_Price;
-                    if (priceGap > 0.8) {
+                    if (priceGap > 2.0) {
                         competitorGaps++;
                     }
                 }
