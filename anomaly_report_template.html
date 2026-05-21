@@ -876,8 +876,12 @@
 
         function showError(msg) {
             const el = document.getElementById('error-alert');
-            el.style.display = 'block';
-            el.innerHTML = `<strong>Data Issue:</strong> ${msg}`;
+            if (el) {
+                el.style.display = 'block';
+                el.innerHTML = `<strong>Data Issue:</strong> ${msg}`;
+            } else {
+                console.error("Data Issue:", msg);
+            }
         }
 
         function processDataset(newDataset) {

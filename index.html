@@ -931,7 +931,7 @@
                     <p class="panel-subtitle">Calculated by first-half vs. second-half volume comparison</p>
                 </div>
             </div>
-            <div style="position: relative; flex: 1; min-height: 250px;">
+            <div id="growthChart-container" style="position: relative; flex: 1; min-height: 250px;">
                 <canvas id="growthChart" aria-label="Period Growth Bar Chart"></canvas>
             </div>
         </div>
@@ -944,7 +944,7 @@
                     <p class="panel-subtitle">Day-on-day daily units sold with rolling average triggers</p>
                 </div>
             </div>
-            <div style="position: relative; flex: 1; min-height: 200px;">
+            <div id="trendChart-container" style="position: relative; flex: 1; min-height: 200px;">
                 <canvas id="trendChart" aria-label="Daily Units Sold Trend Chart"></canvas>
             </div>
             <div class="anomaly-list" id="anomaly-list-container">
@@ -1065,7 +1065,7 @@
                     <p class="panel-subtitle">Distribution of total period revenue</p>
                 </div>
             </div>
-            <div style="position: relative; flex: 1; min-height: 250px; display: flex; align-items: center; justify-content: center;">
+            <div id="revenueShareChart-container" style="position: relative; flex: 1; min-height: 250px; display: flex; align-items: center; justify-content: center;">
                 <canvas id="revenueShareChart" aria-label="Revenue Share Donut Chart"></canvas>
             </div>
         </div>
@@ -1080,6 +1080,21 @@
             </div>
             <div class="contributor-list" id="bottom-contributors-container">
                 <!-- Bottom items filled by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. SECTION: Demand Weights -->
+    <section id="module-demand" class="dashboard-section full-width" aria-label="Demand Analytics" style="margin-bottom: 24px;">
+        <div class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2 class="panel-title">Demand Weights & Popularity Score</h2>
+                    <p class="panel-subtitle">Composite consumer popularity metrics and conversions</p>
+                </div>
+            </div>
+            <div class="demand-grid" id="demand-tiles-container">
+                <!-- Filled dynamically by JS -->
             </div>
         </div>
     </section>
@@ -103542,12 +103557,14 @@
 
         // Render Horizontal growth bar chart (Units and Revenue Growth side-by-side)
         function renderGrowthChart(grouped) {
-            const canvasEl = document.getElementById('growthChart');
-            const parent = canvasEl.parentNode;
+            const container = document.getElementById('growthChart-container');
+            if (!container) return;
             
             // Re-create canvas to avoid chart reuse bugs
-            parent.innerHTML = '<canvas id="growthChart" aria-label="Period Growth Bar Chart"></canvas>';
-            const ctx = document.getElementById('growthChart').getContext('2d');
+            container.innerHTML = '<canvas id="growthChart" aria-label="Period Growth Bar Chart"></canvas>';
+            const canvas = document.getElementById('growthChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
             
             if (growthChartInstance) {
                 growthChartInstance.destroy();
@@ -103617,12 +103634,14 @@
 
         // Render Daily trend chart with anomaly filters
         function renderTrendChart(rows, latestDate, cutoffDate) {
-            const canvasEl = document.getElementById('trendChart');
-            const parent = canvasEl.parentNode;
+            const container = document.getElementById('trendChart-container');
+            if (!container) return;
             
             // Re-create canvas
-            parent.innerHTML = '<canvas id="trendChart" aria-label="Daily Units Sold Trend Chart"></canvas>';
-            const ctx = document.getElementById('trendChart').getContext('2d');
+            container.innerHTML = '<canvas id="trendChart" aria-label="Daily Units Sold Trend Chart"></canvas>';
+            const canvas = document.getElementById('trendChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
             
             if (trendChartInstance) {
                 trendChartInstance.destroy();
@@ -103670,19 +103689,21 @@
 
             // Populate Anomaly Alert Box
             const box = document.getElementById('anomaly-list-container');
-            box.innerHTML = '';
-            if (anomalies.length === 0) {
-                box.innerHTML = `<div style="color: var(--text-secondary); text-align: center;">No volume anomalies detected in this window.</div>`;
-            } else {
-                anomalies.sort((a,b) => b.date.localeCompare(a.date)).forEach(a => {
-                    const isSpike = a.type === 'SPIKE';
-                    const devPct = ((a.value - a.threshold)/a.threshold * 100).toFixed(0);
-                    box.innerHTML += `
-                        <div class="anomaly-item ${isSpike ? 'anomaly-spike' : 'anomaly-drop'}">
-                            <span>● <strong>${a.date}</strong>: Daily Sales ${isSpike ? 'Spike' : 'Drop'} (${a.value} units)</span>
-                            <span>${isSpike ? '+' : ''}${devPct}% vs 7D average</span>
-                        </div>`;
-                });
+            if (box) {
+                box.innerHTML = '';
+                if (anomalies.length === 0) {
+                    box.innerHTML = `<div style="color: var(--text-secondary); text-align: center;">No volume anomalies detected in this window.</div>`;
+                } else {
+                    anomalies.sort((a,b) => b.date.localeCompare(a.date)).forEach(a => {
+                        const isSpike = a.type === 'SPIKE';
+                        const devPct = ((a.value - a.threshold)/a.threshold * 100).toFixed(0);
+                        box.innerHTML += `
+                            <div class="anomaly-item ${isSpike ? 'anomaly-spike' : 'anomaly-drop'}">
+                                <span>● <strong>${a.date}</strong>: Daily Sales ${isSpike ? 'Spike' : 'Drop'} (${a.value} units)</span>
+                                <span>${isSpike ? '+' : ''}${devPct}% vs 7D average</span>
+                            </div>`;
+                    });
+                }
             }
 
             trendChartInstance = new Chart(ctx, {
@@ -103737,6 +103758,7 @@
         // Render In-stock bars
         function renderStockBars(grouped) {
             const container = document.getElementById('stock-bars-container');
+            if (!container) return;
             container.innerHTML = '';
             
             const list = Object.values(grouped).map(g => {
@@ -103779,6 +103801,7 @@
         function renderPriceTracking(filteredRows, grouped) {
             const changeBody = document.getElementById('price-changes-table-body');
             const compBody = document.getElementById('comp-table-body');
+            if (!changeBody || !compBody) return;
             
             changeBody.innerHTML = '';
             compBody.innerHTML = '';
@@ -103888,6 +103911,7 @@
         function renderContributors(grouped) {
             const topContainer = document.getElementById('top-contributors-container');
             const bottomContainer = document.getElementById('bottom-contributors-container');
+            if (!topContainer || !bottomContainer) return;
             
             topContainer.innerHTML = '';
             bottomContainer.innerHTML = '';
@@ -103948,6 +103972,7 @@
         // Render Demand tiles grid
         function renderDemandGrid(grouped) {
             const container = document.getElementById('demand-tiles-container');
+            if (!container) return;
             container.innerHTML = '';
 
             const list = Object.values(grouped).map(g => {
@@ -104027,12 +104052,13 @@
 
         // Render Revenue Share Doughnut Chart
         function renderRevenueShareChart(grouped) {
-            const canvasEl = document.getElementById('revenueShareChart');
-            if (!canvasEl) return;
+            const container = document.getElementById('revenueShareChart-container');
+            if (!container) return;
             
-            const parent = canvasEl.parentNode;
-            parent.innerHTML = '<canvas id="revenueShareChart" aria-label="Revenue Share Donut Chart"></canvas>';
-            const ctx = document.getElementById('revenueShareChart').getContext('2d');
+            container.innerHTML = '<canvas id="revenueShareChart" aria-label="Revenue Share Donut Chart"></canvas>';
+            const canvas = document.getElementById('revenueShareChart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
 
             if (revenueShareChartInstance) {
                 revenueShareChartInstance.destroy();
@@ -104108,13 +104134,14 @@
 
         // Show empty chart states
         function showChartEmptyState(canvasId) {
-            const canvas = document.getElementById(canvasId);
-            const parent = canvas.parentNode;
-            parent.innerHTML = `
-                <div class="empty-state">
-                    <span class="empty-state-icon">📊</span>
-                    <span>No data matches your filters</span>
-                </div>`;
+            const container = document.getElementById(canvasId + '-container');
+            if (container) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="empty-state-icon">📊</span>
+                        <span>No data matches your filters</span>
+                    </div>`;
+            }
         }
 
         // Fast CSV parsing function that robustly handles quotes and internal commas
@@ -104417,12 +104444,17 @@
 
         function showError(msg) {
             const alertBox = document.getElementById('error-alert');
-            alertBox.style.display = 'block';
-            alertBox.innerHTML = `<strong>Synchronization Error:</strong> ${msg}`;
+            if (alertBox) {
+                alertBox.style.display = 'block';
+                alertBox.innerHTML = `<strong>Synchronization Error:</strong> ${msg}`;
+            } else {
+                console.error("Synchronization Error:", msg);
+            }
         }
 
         function initializeSyncState() {
-            document.getElementById('last-sync-time').innerText = new Date().toLocaleTimeString();
+            const el = document.getElementById('last-sync-time');
+            if (el) el.innerText = new Date().toLocaleTimeString();
         }
 
         function toggleHealthDetails() {
