@@ -874,67 +874,82 @@
         </div>
     </header>
 
-    <!-- 2. Google Sheets & Local CSV Sync Row — wrapped in "Coming Soon" overlay -->
-    <div style="position: relative; margin-bottom: 20px;">
+    <!-- 2. Google Sheets sync (Coming Soon) + Upload CSV (active) -->
+    <div style="display: flex; gap: 12px; align-items: stretch; margin-bottom: 20px;">
 
-        <!-- ── Sync Row Content (visually dimmed) ── -->
-        <section class="sync-row" aria-label="Data Synchronization Controls" style="margin-bottom: 0; opacity: 0.55; user-select: none;">
-            <div class="input-group">
-                <label class="input-label" for="sheet-url">Google Sheet URL</label>
-                <input type="text" id="sheet-url" placeholder="Paste published Google Sheets CSV URL or standard sharing URL..." tabindex="-1">
-            </div>
-            <div class="input-group small-input">
-                <label class="input-label" for="tab-name">Tab Name</label>
-                <input type="text" id="tab-name" value="RawData" tabindex="-1">
-            </div>
-            <button class="btn btn-primary" tabindex="-1" style="cursor: default;">Sync Sheets</button>
+        <!-- ── Left: Google Sheets sync blocked by Coming Soon overlay ── -->
+        <div style="position: relative; flex: 1;">
+            <section class="sync-row" aria-label="Data Synchronization Controls" style="margin-bottom: 0; opacity: 0.55; user-select: none; height: 100%;">
+                <div class="input-group">
+                    <label class="input-label" for="sheet-url">Google Sheet URL</label>
+                    <input type="text" id="sheet-url" placeholder="Paste published Google Sheets CSV URL or standard sharing URL..." tabindex="-1">
+                </div>
+                <div class="input-group small-input">
+                    <label class="input-label" for="tab-name">Tab Name</label>
+                    <input type="text" id="tab-name" value="RawData" tabindex="-1">
+                </div>
+                <button class="btn btn-primary" tabindex="-1" style="cursor: default;">Sync Sheets</button>
+            </section>
 
-            <div class="input-group small-input" style="flex: 0 0 160px; min-width: 160px;">
-                <label class="input-label">Or Upload Local CSV</label>
-                <button class="btn btn-secondary" tabindex="-1" style="margin-top: 0; width: 100%; cursor: default;">Upload CSV File</button>
-            </div>
-        </section>
-
-        <!-- ── Blocking overlay: 80% transparent, pointer-events block all clicks ── -->
-        <div style="
-            position: absolute;
-            inset: 0;
-            background: rgba(13, 17, 23, 0.20);
-            backdrop-filter: blur(1px);
-            -webkit-backdrop-filter: blur(1px);
-            border-radius: 8px;
-            pointer-events: all;
-            cursor: not-allowed;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 10;
-        " title="Google Sheets live sync — planned feature, not active in this demo">
+            <!-- Blocking overlay -->
             <div style="
+                position: absolute;
+                inset: 0;
+                background: rgba(13, 17, 23, 0.20);
+                backdrop-filter: blur(1px);
+                -webkit-backdrop-filter: blur(1px);
+                border-radius: 8px;
+                pointer-events: all;
+                cursor: not-allowed;
                 display: flex;
                 align-items: center;
-                gap: 10px;
-                background: rgba(13, 17, 23, 0.72);
-                border: 1px solid rgba(79, 142, 247, 0.35);
-                border-radius: 999px;
-                padding: 7px 18px;
-                box-shadow: 0 0 20px rgba(79, 142, 247, 0.15);
-                backdrop-filter: blur(4px);
-            ">
-                <span style="font-size: 0.95rem;">🔌</span>
-                <span style="font-size: 0.78rem; font-weight: 500; color: #a8d1ff; letter-spacing: 0.5px; text-transform: uppercase;">Google Sheets Live Sync — Planned Feature</span>
-                <span style="
-                    font-size: 0.65rem;
-                    font-weight: 500;
-                    text-transform: uppercase;
-                    letter-spacing: 0.6px;
-                    background: rgba(79, 142, 247, 0.15);
-                    border: 1px solid rgba(79, 142, 247, 0.3);
-                    color: var(--accent-blue);
-                    padding: 2px 8px;
+                justify-content: center;
+                z-index: 10;
+            " title="Google Sheets live sync &#x2014; planned feature, not active in this demo">
+                <div style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    background: rgba(13, 17, 23, 0.72);
+                    border: 1px solid rgba(79, 142, 247, 0.35);
                     border-radius: 999px;
-                ">Coming Soon</span>
+                    padding: 7px 18px;
+                    box-shadow: 0 0 20px rgba(79, 142, 247, 0.15);
+                    backdrop-filter: blur(4px);
+                ">
+                    <span style="font-size: 0.95rem;">&#x1F50C;</span>
+                    <span style="font-size: 0.78rem; font-weight: 500; color: #a8d1ff; letter-spacing: 0.5px; text-transform: uppercase;">Google Sheets Live Sync &#x2014; Planned Feature</span>
+                    <span style="
+                        font-size: 0.65rem;
+                        font-weight: 500;
+                        text-transform: uppercase;
+                        letter-spacing: 0.6px;
+                        background: rgba(79, 142, 247, 0.15);
+                        border: 1px solid rgba(79, 142, 247, 0.3);
+                        color: var(--accent-blue);
+                        padding: 2px 8px;
+                        border-radius: 999px;
+                    ">Coming Soon</span>
+                </div>
             </div>
+        </div>
+
+        <!-- ── Right: Upload CSV &#x2014; fully active & clickable ── -->
+        <div style="
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 6px;
+            flex: 0 0 180px;
+            min-width: 160px;
+        ">
+            <label class="input-label" for="file-upload">Upload Local CSV</label>
+            <input type="file" id="file-upload" accept=".csv" style="display: none;" onchange="handleLocalCSVUpload(event)">
+            <button class="btn btn-secondary" onclick="document.getElementById('file-upload').click()" style="margin-top: 0; width: 100%;">&#x2B06; Upload CSV File</button>
         </div>
 
     </div>
