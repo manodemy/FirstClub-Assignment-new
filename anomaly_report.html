@@ -583,6 +583,151 @@
         .delta-up { color: var(--accent-green); font-weight: 500; }
         .delta-down { color: var(--accent-red); font-weight: 500; }
 
+        /* ── Info Icon & Metric Popup ───────────────────────── */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: rgba(79, 142, 247, 0.12);
+            border: 1px solid rgba(79, 142, 247, 0.3);
+            color: var(--accent-blue);
+            font-size: 0.62rem;
+            font-weight: 700;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.2s ease;
+            vertical-align: middle;
+            margin-left: 5px;
+            flex-shrink: 0;
+            user-select: none;
+        }
+        .info-icon:hover {
+            background: rgba(79, 142, 247, 0.25);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 8px rgba(79, 142, 247, 0.4);
+            transform: scale(1.1);
+        }
+
+        /* Modal overlay */
+        .metric-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 8, 15, 0.78);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+        }
+        .metric-modal-overlay.active {
+            display: flex;
+        }
+
+        /* Modal card */
+        .metric-modal {
+            background: linear-gradient(145deg, #1a2035 0%, #161b27 100%);
+            border: 1px solid rgba(79, 142, 247, 0.25);
+            border-radius: 14px;
+            padding: 28px 32px;
+            max-width: 520px;
+            width: calc(100% - 40px);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(79, 142, 247, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            position: relative;
+            animation: modalIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.92) translateY(12px); }
+            to   { opacity: 1; transform: scale(1)   translateY(0); }
+        }
+
+        .metric-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s ease;
+        }
+        .metric-modal-close:hover {
+            background: rgba(241, 107, 107, 0.15);
+            border-color: rgba(241, 107, 107, 0.3);
+            color: var(--accent-red);
+        }
+
+        .metric-modal-tag {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent-blue);
+            background: rgba(79, 142, 247, 0.1);
+            border: 1px solid rgba(79, 142, 247, 0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .metric-modal-title {
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            line-height: 1.3;
+        }
+
+        .metric-modal-body {
+            font-size: 0.86rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .metric-formula-box {
+            background: rgba(13, 17, 23, 0.6);
+            border: 1px solid rgba(79, 142, 247, 0.15);
+            border-left: 3px solid var(--accent-blue);
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin: 12px 0;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.82rem;
+            color: #a8d1ff;
+            line-height: 1.5;
+        }
+
+        .metric-note {
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: rgba(245, 166, 35, 0.05);
+            border: 1px solid rgba(245, 166, 35, 0.15);
+            border-radius: 6px;
+            font-size: 0.79rem;
+            color: var(--accent-amber);
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        /* th label with info icon aligned */
+        .th-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
         @media (max-width: 1024px) {
             .kpi-grid {
                 grid-template-columns: repeat(3, 1fr);
@@ -712,35 +857,50 @@
     <section class="kpi-grid" aria-label="High-Level Anomaly Summary">
         <div class="kpi-card" style="border-left: 3px solid var(--accent-blue);">
             <div>
-                <span class="kpi-label">Checked Products</span>
+                <span class="kpi-label">
+                    Checked Products
+                    <button class="info-icon" onclick="showMetricInfo('checked-products')" aria-label="How is Checked Products calculated">i</button>
+                </span>
                 <div class="kpi-value" id="kpi-total-checked">0</div>
             </div>
             <span class="kpi-subtitle">Total unique FSNs</span>
         </div>
         <div class="kpi-card" style="border-left: 3px solid var(--accent-red);">
             <div>
-                <span class="kpi-label">Critical Spikes</span>
+                <span class="kpi-label">
+                    Critical Spikes
+                    <button class="info-icon" onclick="showMetricInfo('crit-spikes')" aria-label="How is Critical Spikes calculated">i</button>
+                </span>
                 <div class="kpi-value" style="color: var(--accent-red);" id="kpi-crit-spikes">0</div>
             </div>
             <span class="kpi-subtitle">⚡ Revenue Spike &ge; 200%</span>
         </div>
         <div class="kpi-card" style="border-left: 3px solid var(--accent-green);">
             <div>
-                <span class="kpi-label">Volumetric Spikes</span>
+                <span class="kpi-label">
+                    Volumetric Spikes
+                    <button class="info-icon" onclick="showMetricInfo('norm-spikes')" aria-label="How is Volumetric Spikes calculated">i</button>
+                </span>
                 <div class="kpi-value" style="color: var(--accent-green);" id="kpi-norm-spikes">0</div>
             </div>
             <span class="kpi-subtitle">▲ Revenue Spike &ge; 80%</span>
         </div>
         <div class="kpi-card" style="border-left: 3px solid var(--accent-amber);">
             <div>
-                <span class="kpi-label">Volumetric Drops</span>
+                <span class="kpi-label">
+                    Volumetric Drops
+                    <button class="info-icon" onclick="showMetricInfo('norm-drops')" aria-label="How is Volumetric Drops calculated">i</button>
+                </span>
                 <div class="kpi-value" style="color: var(--accent-amber);" id="kpi-norm-drops">0</div>
             </div>
             <span class="kpi-subtitle">▼ Revenue Spike &le; -55%</span>
         </div>
         <div class="kpi-card" style="border-left: 3px solid var(--accent-purple);">
             <div>
-                <span class="kpi-label">Critical Drops</span>
+                <span class="kpi-label">
+                    Critical Drops
+                    <button class="info-icon" onclick="showMetricInfo('crit-drops')" aria-label="How is Critical Drops calculated">i</button>
+                </span>
                 <div class="kpi-value" style="color: var(--accent-purple);" id="kpi-crit-drops">0</div>
             </div>
             <span class="kpi-subtitle">🚨 Revenue Spike &le; -85%</span>
@@ -780,14 +940,14 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Product ID (FSN)</th>
+                        <th><span class="th-label">Product ID (FSN) <button class="info-icon" onclick="showMetricInfo('col-fsn')" aria-label="About Product ID FSN">i</button></span></th>
                         <th>Product Name</th>
                         <th>Brand</th>
                         <th>Category</th>
-                        <th style="text-align: right;">Spiked Revenue (D-1)</th>
-                        <th style="text-align: right;">Baseline Revenue Avg (D-2 to D-8)</th>
-                        <th style="text-align: right;">Revenue Spike (%)</th>
-                        <th style="text-align: center;">Severity Trigger</th>
+                        <th style="text-align: right;"><span class="th-label" style="justify-content:flex-end;">Spiked Revenue (D-1) <button class="info-icon" onclick="showMetricInfo('col-spiked-rev')" aria-label="How is Spiked Revenue calculated">i</button></span></th>
+                        <th style="text-align: right;"><span class="th-label" style="justify-content:flex-end;">Baseline Revenue Avg (D-2 to D-8) <button class="info-icon" onclick="showMetricInfo('col-baseline')" aria-label="How is Baseline Revenue Avg calculated">i</button></span></th>
+                        <th style="text-align: right;"><span class="th-label" style="justify-content:flex-end;">Revenue Spike (%) <button class="info-icon" onclick="showMetricInfo('col-deviation')" aria-label="How is Revenue Spike calculated">i</button></span></th>
+                        <th style="text-align: center;"><span class="th-label" style="justify-content:center;">Severity Trigger <button class="info-icon" onclick="showMetricInfo('col-severity')" aria-label="How is Severity Trigger classified">i</button></span></th>
                     </tr>
                 </thead>
                 <tbody id="anomaly-table-body">
@@ -800,6 +960,16 @@
             </table>
         </div>
     </section>
+
+    <!-- ── METRIC INFO MODAL ────────────────────────────────── -->
+    <div class="metric-modal-overlay" id="metric-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="metric-modal-title" onclick="handleOverlayClick(event)">
+        <div class="metric-modal" id="metric-modal-card">
+            <button class="metric-modal-close" onclick="closeMetricInfo()" aria-label="Close">&#x2715;</button>
+            <div class="metric-modal-tag" id="metric-modal-tag">Metric</div>
+            <div class="metric-modal-title" id="metric-modal-title">Metric Name</div>
+            <div class="metric-modal-body" id="metric-modal-body">Loading...</div>
+        </div>
+    </div>
 
     <!-- CORE LOGIC: JS ENGINE -->
     <script>
@@ -102814,6 +102984,121 @@
         let uniqueBrands = [];
         let uniqueCategories = [];
         let evaluationDate = "";
+
+        /* ── Metric Info Popup Definitions ────────────────────────── */
+        const METRIC_INFO = {
+            'checked-products': {
+                tag: 'KPI Card',
+                title: 'Checked Products',
+                body: `<p>The total count of <strong>unique product FSNs</strong> present in the uploaded dataset that were evaluated for anomalies on the target evaluation date.</p>
+                    <div class="metric-formula-box">Checked Products = COUNT(DISTINCT FSN)</div>
+                    <p>Every FSN that appears in the dataset is checked against the baseline window, regardless of whether it triggered an anomaly. Only FSNs with revenue &gt; 0 on any day contribute to this count.</p>
+                    <div class="metric-note">💡 This is a product universe size indicator — it tells you how broad the evaluation scope is.</div>`
+            },
+            'crit-spikes': {
+                tag: 'KPI Card — Spike Severity',
+                title: 'Critical Spikes ⚡',
+                body: `<p>Count of products whose latest-day revenue increased by <strong>200% or more</strong> compared to their 7-day baseline daily average, with at least 10 units sold on the latest day.</p>
+                    <div class="metric-formula-box">Revenue Spike (%) = ((D-1 Revenue − Baseline Avg) / Baseline Avg) × 100<br><br>Triggered when: Spike ≥ 200% AND D-1 Units ≥ 10<br>OR: Baseline Avg = 0 AND D-1 Units ≥ 10</div>
+                    <p>The minimum unit threshold (10 units) prevents low-volume noise from triggering false critical alerts.</p>
+                    <div class="metric-note">⚡ A critical spike may indicate a viral moment, flash-sale listing error, or price-scraping event.</div>`
+            },
+            'norm-spikes': {
+                tag: 'KPI Card — Spike Severity',
+                title: 'Volumetric Spikes ▲',
+                body: `<p>Count of products whose latest-day revenue increased by <strong>80% or more</strong> compared to their 7-day baseline daily average, with at least 5 units sold on the latest day.</p>
+                    <div class="metric-formula-box">Revenue Spike (%) = ((D-1 Revenue − Baseline Avg) / Baseline Avg) × 100<br><br>Triggered when: Spike ≥ 80% AND D-1 Units ≥ 5<br>OR: Baseline Avg = 0 AND D-1 Units ≥ 5</div>
+                    <p>Volumetric Spikes represent strong positive momentum — products growing significantly but not reaching critical spike thresholds.</p>
+                    <div class="metric-note">▲ Useful for identifying trending products before they escalate to critical spike territory.</div>`
+            },
+            'norm-drops': {
+                tag: 'KPI Card — Drop Severity',
+                title: 'Volumetric Drops ▼',
+                body: `<p>Count of products whose latest-day revenue dropped by <strong>55% or more</strong> compared to their 7-day baseline daily average, with a trailing baseline average of at least 2.0 units sold per day.</p>
+                    <div class="metric-formula-box">Revenue Spike (%) = ((D-1 Revenue − Baseline Avg) / Baseline Avg) × 100<br><br>Triggered when: Spike ≤ −55% AND Baseline Sales Avg ≥ 2.0</div>
+                    <p>The baseline units threshold (≥ 2.0 avg/day) ensures only products with consistent historical volume are flagged, avoiding noise from rarely-sold items.</p>
+                    <div class="metric-note">▼ May indicate listing deactivation, out-of-stock, pricing errors, or competitor takeover.</div>`
+            },
+            'crit-drops': {
+                tag: 'KPI Card — Drop Severity',
+                title: 'Critical Drops 🚨',
+                body: `<p>Count of products meeting <strong>either</strong> of two high-risk drop conditions:</p>
+                    <div class="metric-formula-box">Condition A: Revenue Spike ≤ −85% AND Baseline Sales Avg ≥ 4.0 units/day<br><br>Condition B: D-1 Units Sold = 0 AND Baseline Sales Avg ≥ 3.0 units/day</div>
+                    <p><strong>Condition A</strong> catches severe revenue collapse on active products. <strong>Condition B</strong> catches complete sales stoppage — zero units sold on a product that was regularly moving inventory — a high-confidence stockout or delisting signal.</p>
+                    <div class="metric-note">🚨 Critical Drops carry the highest urgency. Immediate investigation recommended for stockout or listing health issues.</div>`
+            },
+            'col-fsn': {
+                tag: 'Table Column',
+                title: 'Product ID (FSN)',
+                body: `<p><strong>FSN (Flipkart Serial Number)</strong> is the unique identifier assigned to every product listing on the platform. It is the primary key used to:</p>
+                    <ul style="margin: 10px 0 10px 16px; line-height: 2;">
+                        <li>Aggregate daily transactions per product</li>
+                        <li>Track historical baseline revenue per listing</li>
+                        <li>Link product metadata (name, brand, category)</li>
+                    </ul>
+                    <div class="metric-formula-box">Each FSN represents one unique product SKU/listing. Multiple rows in the raw CSV with the same FSN and Date are summed together before analysis.</div>
+                    <div class="metric-note">💡 FSNs are deduplicated using COUNT(DISTINCT FSN) across the entire dataset before evaluation begins.</div>`
+            },
+            'col-spiked-rev': {
+                tag: 'Table Column',
+                title: 'Spiked Revenue (D-1)',
+                body: `<p>The <strong>total revenue generated by this product on the most recent evaluation date</strong> (D-1), which is the last date present in the uploaded dataset.</p>
+                    <div class="metric-formula-box">Spiked Revenue (D-1) = SUM(Revenue) WHERE FSN = this product AND Date = Evaluation Date</div>
+                    <p>If multiple transaction rows exist for the same FSN on the same date (e.g. different sub-categories or order batches), they are summed before comparison.</p>
+                    <div class="metric-note">📅 Evaluation Date = the latest date found in the uploaded CSV. Currently: <strong id="modal-eval-date">—</strong></div>`
+            },
+            'col-baseline': {
+                tag: 'Table Column',
+                title: 'Baseline Revenue Avg (D-2 to D-8)',
+                body: `<p>The <strong>7-day daily average revenue</strong> for this product, calculated over the 7 calendar days immediately before the evaluation date (D-2 through D-8).</p>
+                    <div class="metric-formula-box">Baseline Avg = SUM(Revenue for D-2, D-3, D-4, D-5, D-6, D-7, D-8) ÷ 7</div>
+                    <p>This represents the product's <em>typical expected daily revenue</em>. It is a rolling mean, not a cumulative total. The D-1 evaluation day is excluded from the baseline to prevent circular comparison.</p>
+                    <div class="metric-note">📐 Because this is a per-day average, values are of the same magnitude as a single day's revenue — this is mathematically correct and expected.</div>`
+            },
+            'col-deviation': {
+                tag: 'Table Column',
+                title: 'Revenue Spike (%)',
+                body: `<p>The <strong>percentage deviation</strong> of the latest-day revenue relative to the 7-day baseline daily average. This is the core anomaly signal used to trigger severity flags.</p>
+                    <div class="metric-formula-box">Revenue Spike (%) = ((D-1 Revenue − Baseline Avg) / Baseline Avg) × 100<br><br>Special cases:<br>• If Baseline Avg = 0 and D-1 Revenue &gt; 0 → Spike = +100% (new activity)<br>• If Baseline Avg = 0 and D-1 Revenue = 0 → No anomaly flagged</div>
+                    <p>Positive values indicate revenue growth; negative values indicate a revenue decline compared to the baseline window.</p>
+                    <div class="metric-note">📊 Thresholds: ≥ +200% = Critical Spike, ≥ +80% = Volumetric Spike, ≤ −55% = Volumetric Drop, ≤ −85% = Critical Drop</div>`
+            },
+            'col-severity': {
+                tag: 'Table Column',
+                title: 'Severity Trigger Classification',
+                body: `<p>The <strong>severity tier</strong> assigned to this product based on its revenue deviation and unit-volume conditions. Four tiers exist, evaluated in priority order:</p>
+                    <div class="metric-formula-box">1. CRITICAL DROP → D-1 Units = 0 AND Baseline Sales Avg ≥ 3.0<br>   OR Revenue Spike ≤ −85% AND Baseline Sales Avg ≥ 4.0<br><br>2. VOLUMETRIC DROP → Revenue Spike ≤ −55% AND Baseline Sales Avg ≥ 2.0<br><br>3. CRITICAL SPIKE → Revenue Spike ≥ 200% AND D-1 Units ≥ 10<br>   OR Baseline Avg = 0 AND D-1 Units ≥ 10<br><br>4. VOLUMETRIC SPIKE → Revenue Spike ≥ 80% AND D-1 Units ≥ 5<br>   OR Baseline Avg = 0 AND D-1 Units ≥ 5</div>
+                    <p>Only products that meet at least one severity threshold appear in this table. Products within normal deviation bands are not shown.</p>
+                    <div class="metric-note">⚙️ Unit-volume filters are applied in addition to revenue thresholds to suppress false positives from low-traffic products.</div>`
+            }
+        };
+
+        function showMetricInfo(key) {
+            const info = METRIC_INFO[key];
+            if (!info) return;
+            document.getElementById('metric-modal-tag').innerText = info.tag;
+            document.getElementById('metric-modal-title').innerText = info.title;
+            document.getElementById('metric-modal-body').innerHTML = info.body;
+            // Inject live evaluation date into the spiked-rev tooltip
+            const evalEl = document.getElementById('modal-eval-date');
+            if (evalEl && evaluationDate) evalEl.innerText = evaluationDate;
+            document.getElementById('metric-modal-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMetricInfo() {
+            document.getElementById('metric-modal-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target === document.getElementById('metric-modal-overlay')) closeMetricInfo();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMetricInfo();
+        });
+        /* ── End Metric Info Popup ─────────────────────────────────── */
 
         window.addEventListener('DOMContentLoaded', () => {
             initializeSyncState();
