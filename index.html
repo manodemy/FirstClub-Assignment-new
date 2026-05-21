@@ -762,15 +762,7 @@
 
     <!-- 3. Filter Controls Row -->
     <section class="filter-row" aria-label="Dashboard Filters">
-        <div class="filter-group">
-            <label class="input-label" for="drilldown-filter">Drilldown Level</label>
-            <select id="drilldown-filter" onchange="setDrilldownLevel(this.value)">
-                <option value="Brand" selected>Brand</option>
-                <option value="Category">Category</option>
-                <option value="Subcategory">Subcategory</option>
-                <option value="FSN">FSN</option>
-            </select>
-        </div>
+
 
         <div class="filter-group">
             <label class="input-label" for="brand-filter">Brand Filter</label>
@@ -804,17 +796,7 @@
             </div>
         </div>
 
-        <div class="filter-group">
-            <label class="input-label" for="insight-filter">Module Filter</label>
-            <select id="insight-filter" onchange="applyInsightFilter()">
-                <option value="ALL">All Insight Modules</option>
-                <option value="growth">Growth & Trend</option>
-                <option value="instock">In-Stock Health</option>
-                <option value="pricing">Pricing Intelligence</option>
-                <option value="contributors">Contributors</option>
-                <option value="demand">Demand Weights</option>
-            </select>
-        </div>
+
 
         <button class="btn btn-secondary" style="margin-top: 0; height: 38px;" onclick="exportFilteredCSV()">Export CSV</button>
     </section>
@@ -1084,20 +1066,7 @@
         </div>
     </section>
 
-    <!-- 9. SECTION: Demand Weights -->
-    <section id="module-demand" class="dashboard-section full-width" aria-label="Demand Analytics" style="margin-bottom: 24px;">
-        <div class="panel">
-            <div class="panel-header">
-                <div>
-                    <h2 class="panel-title">Demand Weights & Popularity Score</h2>
-                    <p class="panel-subtitle">Composite consumer popularity metrics and conversions</p>
-                </div>
-            </div>
-            <div class="demand-grid" id="demand-tiles-container">
-                <!-- Filled dynamically by JS -->
-            </div>
-        </div>
-    </section>
+
 
 
     <!-- CORE LOGIC: JS ENGINE -->
@@ -103224,26 +103193,7 @@
             processDataAndRender();
         }
 
-        // Insight Module filtering
-        function applyInsightFilter() {
-            const val = document.getElementById('insight-filter').value;
-            const sections = [
-                { id: 'module-growth', val: 'growth' },
-                { id: 'module-instock', val: 'instock' },
-                { id: 'module-pricing', val: 'pricing' },
-                { id: 'module-contributors', val: 'contributors' },
-                { id: 'module-demand', val: 'demand' }
-            ];
-            
-            sections.forEach(s => {
-                const el = document.getElementById(s.id);
-                if (val === 'ALL' || val === s.val) {
-                    el.style.display = '';
-                } else {
-                    el.style.display = 'none';
-                }
-            });
-        }
+
 
         function applyFilters() {
             activeBrand = document.getElementById('brand-filter').value;
@@ -103397,7 +103347,7 @@
             renderPriceTracking(filteredRows, grouped);
             renderContributors(grouped);
             renderRevenueShareChart(grouped);
-            renderDemandGrid(grouped);
+
         }
 
         // Render KPI metrics cards
@@ -103969,54 +103919,7 @@
             });
         }
 
-        // Render Demand tiles grid
-        function renderDemandGrid(grouped) {
-            const container = document.getElementById('demand-tiles-container');
-            if (!container) return;
-            container.innerHTML = '';
 
-            const list = Object.values(grouped).map(g => {
-                return {
-                    key: g.key,
-                    score: g.demandCount > 0 ? (g.demandSum / g.demandCount) : 0
-                };
-            }).sort((a,b) => b.score - a.score);
-
-            if (list.length === 0) {
-                container.innerHTML = `<div class="empty-state">No demand statistics calculated.</div>`;
-                return;
-            }
-
-            list.forEach(item => {
-                let tier = "Low";
-                let badgeClass = "badge-red";
-                let borderColor = "var(--accent-red)";
-                
-                if (item.score >= 70) {
-                    tier = "High";
-                    badgeClass = "badge-green";
-                    borderColor = "var(--accent-green)";
-                } else if (item.score >= 40) {
-                    tier = "Med";
-                    badgeClass = "badge-amber";
-                    borderColor = "var(--accent-amber)";
-                }
-
-                container.innerHTML += `
-                    <div class="demand-tile" style="border-left: 4px solid ${borderColor};">
-                        <div class="demand-tile-header">
-                            <span class="demand-tile-title" title="${item.key}">${item.key}</span>
-                            <span class="badge ${badgeClass}">${tier}</span>
-                        </div>
-                        <div class="demand-tile-score" style="color: ${borderColor};">
-                            ${item.score.toFixed(1)}
-                        </div>
-                        <div class="demand-tile-footer">
-                            Composite Rank &bull; Conv &bull; Repeat Ratio
-                        </div>
-                    </div>`;
-            });
-        }
 
         // Render portfolio statistics below filters
         function renderDataSummary(filteredRows, fullDataset) {
