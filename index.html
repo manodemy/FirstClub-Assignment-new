@@ -715,6 +715,142 @@
                 gap: 8px;
             }
         }
+
+        /* ── Info Icon & Metric Popup ───────────────────────── */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: rgba(79, 142, 247, 0.12);
+            border: 1px solid rgba(79, 142, 247, 0.3);
+            color: var(--accent-blue);
+            font-size: 0.58rem;
+            font-weight: 700;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.2s ease;
+            vertical-align: middle;
+            margin-left: 4px;
+            flex-shrink: 0;
+            user-select: none;
+            padding: 0;
+        }
+        .info-icon:hover {
+            background: rgba(79, 142, 247, 0.28);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 8px rgba(79, 142, 247, 0.4);
+            transform: scale(1.15);
+        }
+
+        /* Modal overlay */
+        .metric-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 8, 15, 0.78);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 9000;
+            align-items: center;
+            justify-content: center;
+        }
+        .metric-modal-overlay.active {
+            display: flex;
+        }
+        .metric-modal {
+            background: linear-gradient(145deg, #1a2035 0%, #161b27 100%);
+            border: 1px solid rgba(79, 142, 247, 0.25);
+            border-radius: 14px;
+            padding: 28px 32px;
+            max-width: 520px;
+            width: calc(100% - 40px);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(79,142,247,0.08), inset 0 1px 0 rgba(255,255,255,0.04);
+            position: relative;
+            animation: modalIn 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.92) translateY(12px); }
+            to   { opacity: 1; transform: scale(1)   translateY(0); }
+        }
+        .metric-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.18s ease;
+        }
+        .metric-modal-close:hover {
+            background: rgba(241,107,107,0.15);
+            border-color: rgba(241,107,107,0.3);
+            color: var(--accent-red);
+        }
+        .metric-modal-tag {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent-blue);
+            background: rgba(79,142,247,0.1);
+            border: 1px solid rgba(79,142,247,0.2);
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .metric-modal-title {
+            font-size: 1.05rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 14px;
+            line-height: 1.3;
+        }
+        .metric-modal-body {
+            font-size: 0.86rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+        .metric-formula-box {
+            background: rgba(13,17,23,0.6);
+            border: 1px solid rgba(79,142,247,0.15);
+            border-left: 3px solid var(--accent-blue);
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin: 12px 0;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.82rem;
+            color: #a8d1ff;
+            line-height: 1.5;
+            white-space: pre-wrap;
+        }
+        .metric-note {
+            margin-top: 12px;
+            padding: 8px 12px;
+            background: rgba(245,166,35,0.05);
+            border: 1px solid rgba(245,166,35,0.15);
+            border-radius: 6px;
+            font-size: 0.79rem;
+            color: var(--accent-amber);
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+        /* KPI label flex alignment so icon sits inline */
+        .kpi-label {
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -855,49 +991,49 @@
     <section class="kpi-grid" aria-label="Key Performance Indicators">
         <!-- 1. Total Revenue -->
         <div class="kpi-card">
-            <span class="kpi-label" title="Total sales revenue generated from all matching transactions in active period">Total Revenue</span>
+            <span class="kpi-label">Total Revenue <button class="info-icon" onclick="showMetricInfo('total-revenue')" aria-label="How is Total Revenue calculated">i</button></span>
             <span id="kpi-revenue" class="kpi-value">₹0</span>
             <span id="kpi-revenue-delta" class="kpi-delta delta-neutral">--</span>
         </div>
         <!-- 2. Units Sold -->
         <div class="kpi-card">
-            <span class="kpi-label" title="Total quantity of items sold in matching transactions">Units Sold</span>
+            <span class="kpi-label">Units Sold <button class="info-icon" onclick="showMetricInfo('units-sold')" aria-label="How is Units Sold calculated">i</button></span>
             <span id="kpi-units" class="kpi-value">0</span>
             <span id="kpi-units-delta" class="kpi-delta delta-neutral">--</span>
         </div>
         <!-- 3. Avg In-Stock -->
         <div class="kpi-card">
-            <span class="kpi-label" title="Average inventory availability rate across active products (benchmark is 70%)">Avg In-Stock %</span>
+            <span class="kpi-label">Avg In-Stock % <button class="info-icon" onclick="showMetricInfo('avg-instock')" aria-label="How is Avg In-Stock calculated">i</button></span>
             <span id="kpi-instock" class="kpi-value">0%</span>
             <span id="kpi-instock-delta" class="kpi-delta delta-neutral">--</span>
         </div>
         <!-- 4. Avg Selling Price (ASP) -->
         <div class="kpi-card">
-            <span class="kpi-label" title="Average Selling Price per unit sold (Total Revenue / Total Units)">Avg Selling Price (ASP)</span>
+            <span class="kpi-label">Avg Selling Price (ASP) <button class="info-icon" onclick="showMetricInfo('asp')" aria-label="How is ASP calculated">i</button></span>
             <span id="kpi-asp" class="kpi-value">₹0</span>
             <span id="kpi-asp-delta" class="kpi-delta delta-neutral">--</span>
         </div>
         <!-- 5. Growing Entities -->
         <div class="kpi-card">
-            <span class="kpi-label" title="Number of unique products/brands showing positive units sold growth in second half vs. first half of active period">Growing Entities</span>
+            <span class="kpi-label">Growing Entities <button class="info-icon" onclick="showMetricInfo('growing-entities')" aria-label="How is Growing Entities calculated">i</button></span>
             <span id="kpi-growing" class="kpi-value">0</span>
             <span id="kpi-growing-delta" class="kpi-delta delta-neutral">--</span>
         </div>
         <!-- 6. OOS Risk -->
         <div class="kpi-card">
-            <span class="kpi-label" title="Number of products whose latest reported stock level fell below critical threshold of 40%">OOS Risk Items</span>
+            <span class="kpi-label">OOS Risk Items <button class="info-icon" onclick="showMetricInfo('oos-risk')" aria-label="How is OOS Risk calculated">i</button></span>
             <span id="kpi-oos" class="kpi-value">0</span>
             <span id="kpi-oos-delta" class="kpi-delta delta-neutral">--</span>
         </div>
         <!-- 7. Price Increases -->
         <div class="kpi-card">
-            <span class="kpi-label" title="Number of products with a higher average price in the second half compared to the first half of active period">Price Increases</span>
+            <span class="kpi-label">Price Increases <button class="info-icon" onclick="showMetricInfo('price-increases')" aria-label="How is Price Increases calculated">i</button></span>
             <span id="kpi-hikes" class="kpi-value">0</span>
             <span id="kpi-hikes-delta" class="kpi-delta delta-neutral">--</span>
         </div>
         <!-- 8. Competitive Index Advantage -->
         <div class="kpi-card">
-            <span class="kpi-label" title="Number of transactions where our selling price was lower than the competitor benchmark price">CI Advantage</span>
+            <span class="kpi-label">CI Advantage <button class="info-icon" onclick="showMetricInfo('ci-advantage')" aria-label="How is CI Advantage calculated">i</button></span>
             <span id="kpi-ci" class="kpi-value">0</span>
             <span id="kpi-ci-delta" class="kpi-delta delta-neutral">--</span>
         </div>
@@ -1068,6 +1204,16 @@
 
 
 
+
+    <!-- ── METRIC INFO MODAL ────────────────────────────────── -->
+    <div class="metric-modal-overlay" id="metric-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="metric-modal-title" onclick="handleOverlayClick(event)">
+        <div class="metric-modal" id="metric-modal-card">
+            <button class="metric-modal-close" onclick="closeMetricInfo()" aria-label="Close">&#x2715;</button>
+            <div class="metric-modal-tag" id="metric-modal-tag">Metric</div>
+            <div class="metric-modal-title" id="metric-modal-title">Metric Name</div>
+            <div class="metric-modal-body" id="metric-modal-body">Loading...</div>
+        </div>
+    </div>
 
     <!-- CORE LOGIC: JS ENGINE -->
     <script>
@@ -103093,6 +103239,124 @@
         let growthChartInstance = null;
         let trendChartInstance = null;
         let revenueShareChartInstance = null;
+
+        /* ── Metric Info Popup Definitions ───────────────────────── */
+        const HOME_METRIC_INFO = {
+            'total-revenue': {
+                tag: 'KPI Card',
+                title: 'Total Revenue',
+                body: `<p>The <strong>sum of all revenue generated</strong> from every transaction that matches the active filter selection (brand, category, subcategory) within the selected analysis period.</p>
+                    <div class="metric-formula-box">Total Revenue = SUM(Units_Sold × Sell_Price)
+for all rows where Date ≥ Period Start AND filters match</div>
+                    <p>The delta indicator below the value shows how this period's total compares to the <em>equivalent prior period</em> of the same length.</p>
+                    <div class="metric-note">💡 Period comparison uses the half-split method: first half vs. second half of the selected date window.</div>`
+            },
+            'units-sold': {
+                tag: 'KPI Card',
+                title: 'Units Sold',
+                body: `<p>The <strong>total count of units (items) sold</strong> across all transactions matching the active filter selection and selected analysis period.</p>
+                    <div class="metric-formula-box">Units Sold = SUM(Units_Sold)
+for all rows where Date ≥ Period Start AND filters match</div>
+                    <p>Each row in the raw dataset represents one daily sales record for one FSN. Units from multiple records with the same date and FSN are summed together.</p>
+                    <div class="metric-note">📊 The delta % shows units growth from the first half to the second half of the selected period.</div>`
+            },
+            'avg-instock': {
+                tag: 'KPI Card',
+                title: 'Avg In-Stock %',
+                body: `<p>The <strong>average stock availability rate</strong> across all active products in the selected filter scope during the analysis period. It is measured as a percentage of days a product was in stock.</p>
+                    <div class="metric-formula-box">Avg In-Stock % = MEAN(Stock_Level %)
+for all rows where filters match AND Date in period
+
+Benchmarks:
+  ≥ 70% → Green (Healthy)
+  50–70% → Amber (Monitor)
+  &lt; 50% → Red (Critical)</div>
+                    <p>The <code>Stock_Level</code> field in the raw data represents the percentage of inventory available on each day, ranging from 0% (out-of-stock) to 100% (fully stocked).</p>
+                    <div class="metric-note">⚠️ A score below 50% is a strong indicator of supply chain or replenishment issues.</div>`
+            },
+            'asp': {
+                tag: 'KPI Card',
+                title: 'Average Selling Price (ASP)',
+                body: `<p>The <strong>revenue-weighted average price per unit sold</strong> across all matching transactions in the active period. This is NOT a simple average of all listed prices.</p>
+                    <div class="metric-formula-box">ASP = Total Revenue ÷ Total Units Sold
+    = SUM(Revenue) ÷ SUM(Units_Sold)</div>
+                    <p>Using a revenue-weighted calculation ensures that high-volume days contribute proportionally more to the ASP, making it a truer reflection of the effective realized price.</p>
+                    <div class="metric-note">💡 ASP rising while units fall = price-led growth. ASP falling while units rise = volume-led growth.</div>`
+            },
+            'growing-entities': {
+                tag: 'KPI Card',
+                title: 'Growing Entities',
+                body: `<p>The count of <strong>unique entities (brands, categories, or FSNs — depending on drilldown level)</strong> that showed positive units-sold growth when comparing the second half of the period to the first half.</p>
+                    <div class="metric-formula-box">Split Period into:
+  First Half  = Day 1 to Day (N/2)
+  Second Half = Day (N/2+1) to Day N
+
+Growing Entity = one where:
+  SUM(Units, Second Half) &gt; SUM(Units, First Half)</div>
+                    <p>This metric highlights momentum — entities where sales velocity is accelerating within the selected window.</p>
+                    <div class="metric-note">📈 A high Growing Entities count relative to total entities indicates a broadly positive trend across the portfolio.</div>`
+            },
+            'oos-risk': {
+                tag: 'KPI Card',
+                title: 'OOS Risk Items',
+                body: `<p>The count of <strong>unique products (FSNs) whose most recently reported stock level fell below the critical threshold of 40%</strong>. These products are at high risk of going out-of-stock (OOS).</p>
+                    <div class="metric-formula-box">OOS Risk = COUNT(DISTINCT FSN) where:
+  Latest Stock_Level &lt; 40%
+  AND FSN matches active filters</div>
+                    <p>Only the <em>latest</em> stock reading per FSN is evaluated. A product that recovers stock between readings will not be flagged.</p>
+                    <div class="metric-note">🚨 OOS events directly cause lost revenue and can damage brand trust. Items approaching 40% should be escalated for replenishment.</div>`
+            },
+            'price-increases': {
+                tag: 'KPI Card',
+                title: 'Price Increases',
+                body: `<p>The count of <strong>unique entities where the weighted average selling price in the second half of the period was higher than in the first half</strong>, indicating a price increase trend.</p>
+                    <div class="metric-formula-box">Split Period into First Half &amp; Second Half
+
+For each entity:
+  Avg Price (H1) = SUM(Revenue H1) / SUM(Units H1)
+  Avg Price (H2) = SUM(Revenue H2) / SUM(Units H2)
+
+Price Increase = one where Avg Price H2 &gt; Avg Price H1</div>
+                    <p>This uses a revenue-weighted average to avoid distortion from individual high-priced or low-priced transactions.</p>
+                    <div class="metric-note">💰 Rising prices without a proportional unit drop signals healthy pricing power. Price increases with unit drops warrant investigation.</div>`
+            },
+            'ci-advantage': {
+                tag: 'KPI Card',
+                title: 'Competitive Index (CI) Advantage',
+                body: `<p>The count of <strong>transaction rows where our selling price was strictly lower than the competitor benchmark price</strong> for the same product on the same date. This indicates a pricing competitive advantage.</p>
+                    <div class="metric-formula-box">CI Advantage Count = COUNT(rows) where:
+  Sell_Price &lt; Competitor_Price
+  AND filters match AND Date in period
+
+CI Gap % = ((Competitor_Price − Sell_Price) / Competitor_Price) × 100</div>
+                    <p>A higher CI Advantage count means we are frequently undercutting competitors, which can drive volume but may compress margins. A lower count may indicate we are losing price competitiveness.</p>
+                    <div class="metric-note">🎯 The Competitive Price Comparison table below shows the exact gap % per entity across the active period.</div>`
+            }
+        };
+
+        function showMetricInfo(key) {
+            const info = HOME_METRIC_INFO[key];
+            if (!info) return;
+            document.getElementById('metric-modal-tag').innerText = info.tag;
+            document.getElementById('metric-modal-title').innerText = info.title;
+            document.getElementById('metric-modal-body').innerHTML = info.body;
+            document.getElementById('metric-modal-overlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMetricInfo() {
+            document.getElementById('metric-modal-overlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target === document.getElementById('metric-modal-overlay')) closeMetricInfo();
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMetricInfo();
+        });
+        /* ── End Metric Info Popup ─────────────────────────────── */
 
         // On document load
         window.addEventListener('DOMContentLoaded', async () => {
