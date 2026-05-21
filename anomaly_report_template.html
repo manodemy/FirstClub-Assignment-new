@@ -390,74 +390,194 @@
         }
 
         .table-container {
-            overflow-x: auto;
+            overflow: auto;
             width: 100%;
             flex: 1;
+            max-height: calc(100vh - 420px);
+            min-height: 450px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background-color: #0e131f;
+        }
+
+        /* Modern Premium Scrollbar Styling */
+        .table-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.01);
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            border: 2px solid transparent;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             text-align: left;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
         }
 
         th {
             color: var(--text-secondary);
-            padding: 10px 12px;
-            border-bottom: 1px solid var(--border);
+            padding: 14px 16px;
             font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            font-weight: 500;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #161b27;
+            border-bottom: 2px solid var(--border);
+            box-shadow: inset 0 -1px 0 var(--border);
         }
 
         td {
-            padding: 10px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
             color: var(--text-primary);
+            vertical-align: middle;
+            transition: background-color 0.2s ease;
+        }
+
+        tr:nth-child(even) td {
+            background-color: rgba(255, 255, 255, 0.015);
         }
 
         tr:hover td {
-            background-color: rgba(255, 255, 255, 0.01);
+            background-color: rgba(79, 142, 247, 0.04) !important;
+        }
+
+        /* Active Monospaced Pill Tag for FSN */
+        .fsn-tag {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #58a6ff;
+            background: rgba(88, 166, 255, 0.07);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-block;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
+        }
+        
+        tr:hover .fsn-tag {
+            background: rgba(88, 166, 255, 0.15);
+            border-color: rgba(88, 166, 255, 0.4);
+            box-shadow: 0 0 8px rgba(88, 166, 255, 0.15);
         }
 
         /* Badges & Glowing indicators */
         .badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
             font-size: 0.72rem;
             font-weight: 500;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
             text-align: center;
-            min-width: 110px;
+            min-width: 125px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
         }
 
         .badge-crit-spike {
-            background-color: rgba(241, 107, 107, 0.15);
-            color: #ff5c5c;
-            border: 1px solid rgba(241, 107, 107, 0.3);
-            box-shadow: 0 0 10px rgba(241, 107, 107, 0.15);
+            background-color: rgba(241, 107, 107, 0.1);
+            color: #ff6b6b;
+            border: 1px solid rgba(241, 107, 107, 0.25);
+            box-shadow: 0 0 12px rgba(241, 107, 107, 0.15);
+        }
+        .badge-crit-spike .badge-dot {
+            background-color: #ff6b6b;
+            box-shadow: 0 0 6px #ff6b6b;
         }
 
         .badge-spike {
-            background-color: rgba(45, 212, 160, 0.15);
-            color: var(--accent-green);
-            border: 1px solid rgba(45, 212, 160, 0.3);
-            box-shadow: 0 0 10px rgba(45, 212, 160, 0.1);
+            background-color: rgba(45, 212, 160, 0.1);
+            color: #2dd4a0;
+            border: 1px solid rgba(45, 212, 160, 0.25);
+            box-shadow: 0 0 12px rgba(45, 212, 160, 0.1);
+        }
+        .badge-spike .badge-dot {
+            background-color: #2dd4a0;
+            box-shadow: 0 0 6px #2dd4a0;
         }
 
         .badge-drop {
-            background-color: rgba(245, 166, 35, 0.15);
-            color: var(--accent-amber);
-            border: 1px solid rgba(245, 166, 35, 0.3);
+            background-color: rgba(245, 166, 35, 0.08);
+            color: #f5a623;
+            border: 1px solid rgba(245, 166, 35, 0.2);
+            box-shadow: 0 0 10px rgba(245, 166, 35, 0.05);
+        }
+        .badge-drop .badge-dot {
+            background-color: #f5a623;
+            box-shadow: 0 0 6px #f5a623;
         }
 
         .badge-crit-drop {
-            background-color: rgba(167, 139, 250, 0.15);
+            background-color: rgba(167, 139, 250, 0.1);
             color: #c084fc;
-            border: 1px solid rgba(167, 139, 250, 0.3);
-            box-shadow: 0 0 10px rgba(167, 139, 250, 0.15);
+            border: 1px solid rgba(167, 139, 250, 0.25);
+            box-shadow: 0 0 12px rgba(167, 139, 250, 0.15);
+        }
+        .badge-crit-drop .badge-dot {
+            background-color: #c084fc;
+            box-shadow: 0 0 6px #c084fc;
+        }
+
+        /* Glassmorphic Empty State Card */
+        .empty-state-card {
+            background: linear-gradient(135deg, rgba(22, 27, 39, 0.4) 0%, rgba(13, 17, 23, 0.6) 100%);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            max-width: 500px;
+            margin: 40px auto;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .empty-state-icon {
+            font-size: 3rem;
+            margin-bottom: 16px;
+            display: inline-block;
+            filter: drop-shadow(0 0 12px rgba(245, 166, 35, 0.3));
+        }
+
+        .empty-state-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-desc {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.5;
         }
 
         .delta-up { color: var(--accent-green); font-weight: 500; }
@@ -672,8 +792,8 @@
                 </thead>
                 <tbody id="anomaly-table-body">
                     <tr>
-                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 48px;">
-                            Evaluating system baseline... Please wait.
+                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 48px; font-size: 0.95rem;">
+                            Evaluating system baseline & product anomaly rules... Please wait.
                         </td>
                     </tr>
                 </tbody>
@@ -1070,8 +1190,6 @@
             });
             
             displayAnomalies(filtered);
-            // Re-apply sticky offsets if table changed
-            setTimeout(updateStickyHeaders, 50);
         }
 
         function displayAnomalies(anomalies) {
@@ -1084,8 +1202,13 @@
             if (anomalies.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 48px; font-size: 0.9rem;">
-                            No active product-level anomalies found matching the filter criteria.
+                        <td colspan="8" style="padding: 0;">
+                            <div class="empty-state-card">
+                                <span class="empty-state-icon">🔍</span>
+                                <h3 class="empty-state-title">No matching anomalies found</h3>
+                                <p class="empty-state-desc">We couldn't find any anomalies matching your search filters. Try adjusting your fuzzy search, brand, category, or severity criteria.</p>
+                                <button class="btn btn-primary" onclick="resetAllFilters()" style="margin-top: 0; height: 38px;">Reset Search & Filters</button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -1098,16 +1221,16 @@
                 
                 if (a.severity === 'CRIT_SPIKE') {
                     badgeClass = 'badge-crit-spike';
-                    typeText = '⚡ Critical Spike';
+                    typeText = '<span class="badge-dot"></span>⚡ Crit Spike';
                 } else if (a.severity === 'SPIKE') {
                     badgeClass = 'badge-spike';
-                    typeText = '▲ Spike';
+                    typeText = '<span class="badge-dot"></span>▲ Spike';
                 } else if (a.severity === 'DROP') {
                     badgeClass = 'badge-drop';
-                    typeText = '▼ Drop';
+                    typeText = '<span class="badge-dot"></span>▼ Drop';
                 } else if (a.severity === 'CRIT_DROP') {
                     badgeClass = 'badge-crit-drop';
-                    typeText = '🚨 Critical Drop';
+                    typeText = '<span class="badge-dot"></span>🚨 Crit Drop';
                 }
 
                 const isSpike = a.severity === 'CRIT_SPIKE' || a.severity === 'SPIKE';
@@ -1116,15 +1239,15 @@
                 const devText = `${devSign}${a.deviation.toFixed(1)}`;
 
                 tbody.innerHTML += `
-                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.02); height: 42px;">
-                        <td style="padding: 10px 12px; font-family: monospace; color: var(--accent-blue); letter-spacing: 0.5px; font-weight: 500;">${a.fsn}</td>
-                        <td style="padding: 10px 12px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;" title="${a.name}">${a.name}</td>
-                        <td style="padding: 10px 12px; white-space: nowrap;">${a.brand}</td>
-                        <td style="padding: 10px 12px; white-space: nowrap;">${a.category}</td>
-                        <td style="padding: 10px 12px; text-align: right; font-weight: 500;">₹${a.latestRevenue.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-                        <td style="padding: 10px 12px; text-align: right; color: var(--text-secondary);">₹${a.baselineRevenueAvg.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
-                        <td class="${devClass}" style="padding: 10px 12px; text-align: right; font-weight: 500;">${devText}%</td>
-                        <td style="padding: 10px 12px; text-align: center;"><span class="badge ${badgeClass}">${typeText}</span></td>
+                    <tr>
+                        <td><span class="fsn-tag">${a.fsn}</span></td>
+                        <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500;" title="${a.name}">${a.name}</td>
+                        <td style="white-space: nowrap;">${a.brand}</td>
+                        <td style="white-space: nowrap;">${a.category}</td>
+                        <td style="text-align: right; font-weight: 500;">₹${a.latestRevenue.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                        <td style="text-align: right; color: var(--text-secondary);">₹${a.baselineRevenueAvg.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+                        <td class="${devClass}" style="text-align: right; font-weight: 500;">${devText}%</td>
+                        <td style="text-align: center;"><span class="badge ${badgeClass}">${typeText}</span></td>
                     </tr>
                 `;
             });
@@ -1217,38 +1340,12 @@
             document.body.removeChild(link);
         }
 
-        // Sticky table header logic
-        function updateStickyHeaders() {
-            const headerEl = document.querySelector('header');
-            if (!headerEl) return;
-            const headerH = headerEl.offsetHeight;
-
-            // Make panel-header sticky just below the page header
-            const panelHeader = document.querySelector('.panel-header');
-            if (panelHeader) {
-                panelHeader.style.position = 'sticky';
-                panelHeader.style.top = headerH + 'px';
-                panelHeader.style.zIndex = '90';
-                panelHeader.style.backgroundColor = 'var(--bg-surface)';
-                panelHeader.style.marginTop = '-20px';
-                panelHeader.style.paddingTop = '20px';
-                
-                // Replace margin-bottom with padding-bottom to close the gap
-                panelHeader.style.marginBottom = '0';
-                panelHeader.style.paddingBottom = '16px';
-            }
-
-            // Make table <th> cells sticky below the panel header
-            const ths = document.querySelectorAll('table thead th');
-            if (ths.length > 0 && panelHeader) {
-                const thTop = headerH + panelHeader.offsetHeight;
-                ths.forEach(th => {
-                    th.style.position = 'sticky';
-                    th.style.top = thTop + 'px';
-                    th.style.zIndex = '80';
-                    th.style.backgroundColor = 'var(--bg-surface)';
-                });
-            }
+        function resetAllFilters() {
+            document.getElementById('anomaly-search').value = '';
+            document.getElementById('severity-filter').value = 'ALL';
+            document.getElementById('brand-filter').value = 'ALL';
+            document.getElementById('cat-filter').value = 'ALL';
+            applyFilters();
         }
 
         function toggleHealthDetails() {
@@ -1430,12 +1527,10 @@
                 document.getElementById('sync-text').innerText = 'Demo Dataset loaded';
                 processDataset(DEMO_DATA);
             }
-            updateStickyHeaders();
 
             // Auto-load raw_transaction_data.csv from server
             await autoLoadServerData();
         });
-        window.addEventListener('resize', updateStickyHeaders);
     </script>
 </body>
 </html>
